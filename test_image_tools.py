@@ -55,6 +55,17 @@ def test_resize_kb_best_effort_when_floor_exceeds_target(tmp_path):
     assert len(open(out, "rb").read()) == 9999  # smallest attempt still written
 
 
+def test_resize_kb_best_effort_writes_smallest(tmp_path):
+    src = make_img(tmp_path)
+
+    def encode(img, quality):
+        # monotonic: low quality -> small file, high quality -> big file
+        return b"x" * (2000 if quality <= 5 else 5000)
+
+    out = image_tools.resize_to_kb(src, 1, encode=encode)
+    assert len(open(out, "rb").read()) == 2000  # smallest attempt, not q95's
+
+
 def test_resize_pixels_preserves_aspect(tmp_path):
     src = make_img(tmp_path)
     out = image_tools.resize_to_pixels(src, 50, 50)

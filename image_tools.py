@@ -39,8 +39,7 @@ def resize_to_kb(src, target_kb, encode=_encode_jpeg):
     """Shrink to <= target_kb via binary search on JPEG quality; best effort."""
     img = Image.open(src).convert("RGB")
     target = target_kb * 1024
-    data = encode(img, 95)
-    best = data
+    best = fallback = encode(img, 95)
     lo, hi = 1, 95
     while lo < hi:
         mid = (lo + hi) // 2
@@ -49,10 +48,13 @@ def resize_to_kb(src, target_kb, encode=_encode_jpeg):
             best = data
             lo = mid + 1
         else:
+            if len(data) < len(fallback):
+                fallback = data
             hi = mid
+    data = best if len(best) <= target else fallback
     out = tools_common.unique_path(os.path.splitext(src)[0] + ".jpg")
     with open(out, "wb") as f:
-        f.write(best)
+        f.write(data)
     return out
 
 

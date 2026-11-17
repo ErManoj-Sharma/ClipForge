@@ -1,0 +1,22 @@
+Windows Registry Editor Version 5.00
+
+[HKEY_CLASSES_ROOT\SystemFileAssociations\image\shell\ConvertToPDF]
+@="Convert to PDF"
+"Icon"="shell32.dll,-153"
+
+[HKEY_CLASSES_ROOT\SystemFileAssociations\image\shell\ConvertToPDF\command]
+@="pyw.exe \"C:\\Scripts\\image_to_pdf.py\" \"%1\""
+
+[HKEY_CLASSES_ROOT\SystemFileAssociations\image\shell\ConvertToPNG]
+@="Convert to PNG"
+"Icon"="shell32.dll,-152"
+
+[HKEY_CLASSES_ROOT\SystemFileAssociations\image\shell\ConvertToPNG\command]
+@="pyw.exe \"C:\\Scripts\\image_to_png.py\" \"%1\""
+
+[HKEY_CLASSES_ROOT\SystemFileAssociations\.pdf\shell\ConvertToJPEG]
+@="Convert to JPEG"
+"Icon"="shell32.dll,-152"
+
+[HKEY_CLASSES_ROOT\SystemFileAssociations\.pdf\shell\ConvertToJPEG\command]
+@="pyw.exe \"C:\\Scripts\\pdf_to_jpeg.py\" \"%1\""

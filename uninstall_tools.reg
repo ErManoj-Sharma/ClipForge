@@ -1,0 +1,8 @@
+Windows Registry Editor Version 5.00
+
+; Removes the Image & PDF Tools submenu (image + pdf entries) and Send To shortcut
+; is removed by uninstall.ps1 (registry cannot delete .lnk files).
+
+[-HKEY_CURRENT_USER\Software\Classes\SystemFileAssociations\image\shell\ImagePdfTools]
+
+[-HKEY_CURRENT_USER\Software\Classes\SystemFileAssociations\.pdf\shell\ImagePdfTools]

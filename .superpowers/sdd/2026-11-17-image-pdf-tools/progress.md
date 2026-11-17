@@ -5,3 +5,4 @@ Pre-flight: Task1 unique_path → Task2 (consumes) → Task3 (consumes) → Task
 Task 1: complete (tests: pytest test_tools_common.py -v → 3/3)
 Task 2: complete (tests: pytest test_image_tools.py -v → 7/7; Ruling: pixel resize does not upscale — thumbnail fit-inside; blank test PDF <1KB in Task3 was a test bug, source size raised to 60 pages)
 Task 3: complete (tests: pytest test_pdf_tools.py -v → 8/8; Ruling: compress ladder fixed at (150,80)/(110,60)/(72,40), stops at first fit, else writes best-effort smallest)
+Task 4: complete (manual GUI smoke on DISPLAY=:0: ask_value enter→"100"/esc→None; ask_pixel_size valid→(1280,720), invalid keeps window open, esc→None; reorder up+merge→reordered, esc→None; Ruling: Listbox move() clears selection before re-setting — Tk selection_set proved additive in this build)

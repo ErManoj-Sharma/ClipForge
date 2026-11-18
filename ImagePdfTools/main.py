@@ -18,6 +18,24 @@ def show_error(msg):
     mb.showerror("Image & PDF Tools", msg)
 
 
+def _progress(title, fn, *args):
+    """Run a slow tool with the 'Working...' window showing live steps."""
+    p = dialogs.progress_window(title)
+    try:
+        fn(*args, progress=p)
+    finally:
+        p.close()
+
+
+def _busy(title, fn, *args):
+    """Run a fast tool with a plain 'Working...' window (no console flash)."""
+    p = dialogs.progress_window(title)
+    try:
+        fn(*args)
+    finally:
+        p.close()
+
+
 def _val(title, label):
     v = dialogs.ask_value(title, label)
     if v is None:
@@ -40,45 +58,45 @@ def dispatch(argv):
             return
         src = files[0]
         if action in RESIZE_KB:
-            tools.resize_to_kb(src, RESIZE_KB[action])
+            _progress("Resizing image...", tools.resize_to_kb, src, RESIZE_KB[action])
         elif action == "resize-kb-custom":
             kb = _val("Resize to Custom KB", "Target size in KB:")
             if kb is not None:
-                tools.resize_to_kb(src, kb)
+                _progress("Resizing image...", tools.resize_to_kb, src, kb)
         elif action == "resize-pixels":
             size = dialogs.ask_pixel_size()
             if size is not None:
-                tools.resize_to_pixels(src, *size)
+                _busy("Resizing image...", tools.resize_to_pixels, src, *size)
         elif action == "to-pdf":
-            tools.to_pdf(src)
+            _busy("Converting to PDF...", tools.to_pdf, src)
         elif action == "to-png":
-            tools.to_png(src)
+            _busy("Converting to PNG...", tools.to_png, src)
         elif action == "to-jpg":
-            tools.to_jpg(src)
+            _busy("Converting to JPG...", tools.to_jpg, src)
         elif action == "pdf-to-images":
-            tools.to_images(src)
+            _progress("Converting PDF to images...", tools.to_images, src)
         elif action == "split-page":
-            tools.split_every_page(src)
+            _progress("Splitting PDF...", tools.split_every_page, src)
         elif action == "split-n":
             n = _val("Split Every N Pages", "Pages per file:")
             if n is not None:
                 if n < 1:
                     show_error("Pages per file must be at least 1")
                     return
-                tools.split_every_n(src, n)
+                _progress("Splitting PDF...", tools.split_every_n, src, n)
         elif action in COMPRESS_KB:
-            tools.compress_to_kb(src, COMPRESS_KB[action])
+            _progress("Compressing PDF...", tools.compress_to_kb, src, COMPRESS_KB[action])
         elif action == "compress-custom":
             kb = _val("Compress to Custom", "Target size in KB:")
             if kb is not None:
-                tools.compress_to_kb(src, kb)
+                _progress("Compressing PDF...", tools.compress_to_kb, src, kb)
         elif action == "merge":
             if len(files) < 2:
                 show_error("Select at least two PDFs to merge")
                 return
             ordered = dialogs.reorder_dialog(sorted(files))
             if ordered is not None:
-                tools.merge(ordered)
+                _progress("Merging PDFs...", tools.merge, ordered)
         else:
             show_error(f"Unknown action: {action}")
     except Exception:

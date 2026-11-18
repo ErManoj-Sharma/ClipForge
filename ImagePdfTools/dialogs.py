@@ -14,6 +14,7 @@ def _base_window(title, w, h):
     win.overrideredirect(True)  # borderless
     _center(win, w, h)
     win.attributes("-topmost", True)
+    win.focus_force()  # launched from Explorer: otherwise it can open behind other windows
     return win
 
 
@@ -65,6 +66,22 @@ def ask_pixel_size():
     _run_ok_esc(win, ok)
     win.mainloop()
     return result[0] if result else None
+
+
+def progress_window(title):
+    """Small 'Working...' window. Returns update(text) with .close().
+    Each update repainting the window is what keeps it alive during
+    synchronous work (pyw has no console, nothing else pumps events)."""
+    win = _base_window(title, 360, 70)
+    lbl = tk.Label(win, text="Working...", anchor="w")
+    lbl.pack(fill="x", padx=12, pady=16)
+
+    def update(text):
+        lbl.config(text=text)
+        win.update()
+
+    update.close = win.destroy
+    return update
 
 
 def reorder_dialog(paths):

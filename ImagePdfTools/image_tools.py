@@ -35,7 +35,12 @@ def _encode_jpeg(img, quality):
     return buf.getvalue()
 
 
-def resize_to_kb(src, target_kb, encode=_encode_jpeg):
+def _report(progress, text):
+    if progress:
+        progress(text)
+
+
+def resize_to_kb(src, target_kb, encode=_encode_jpeg, progress=None):
     """Shrink to <= target_kb via binary search on JPEG quality; best effort."""
     img = Image.open(src).convert("RGB")
     target = target_kb * 1024
@@ -43,6 +48,7 @@ def resize_to_kb(src, target_kb, encode=_encode_jpeg):
     lo, hi = 1, 95
     while lo < hi:
         mid = (lo + hi) // 2
+        _report(progress, f"Trying JPEG quality {mid}...")
         data = encode(img, mid)
         if len(data) <= target:
             best = data

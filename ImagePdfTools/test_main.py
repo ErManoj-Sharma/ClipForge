@@ -2,6 +2,18 @@ import sys
 import main as main_mod
 
 
+class FakeProgress:
+    def __init__(self):
+        self.texts = []
+        self.closed = False
+
+    def __call__(self, text):
+        self.texts.append(text)
+
+    def close(self):
+        self.closed = True
+
+
 def run(monkeypatch, argv, **overrides):
     """Call dispatch with patched deps; returns kwargs of the called tool fn."""
     calls = {}
@@ -19,19 +31,23 @@ def run(monkeypatch, argv, **overrides):
     for mod_name, attr in overrides.items():
         monkeypatch.setattr(main_mod, mod_name, attr)
     monkeypatch.setattr(main_mod, "show_error", lambda *a: calls.setdefault("error", a))
+    prog = FakeProgress()
+    monkeypatch.setattr(main_mod.dialogs, "progress_window", lambda title: prog, raising=False)
     main_mod.dispatch(argv)
+    calls["_progress"] = prog
     return calls
 
 
 def test_preset_resize_kb(monkeypatch):
     calls = run(monkeypatch, ["resize-kb-100", "a.jpg"])
-    assert calls["resize_to_kb"] == (("a.jpg", 100), {})
+    assert calls["resize_to_kb"][0] == ("a.jpg", 100)
+    assert calls["resize_to_kb"][1].get("progress") is calls["_progress"]
 
 
 def test_custom_resize_uses_dialog(monkeypatch):
     monkeypatch.setattr(main_mod.dialogs, "ask_value", lambda t, l: "150")
     calls = run(monkeypatch, ["resize-kb-custom", "a.jpg"])
-    assert calls["resize_to_kb"] == (("a.jpg", 150), {})
+    assert calls["resize_to_kb"][0] == ("a.jpg", 150)
 
 
 def test_custom_resize_cancelled_shows_nothing(monkeypatch):
@@ -43,25 +59,31 @@ def test_custom_resize_cancelled_shows_nothing(monkeypatch):
 def test_resize_pixels(monkeypatch):
     monkeypatch.setattr(main_mod.dialogs, "ask_pixel_size", lambda: (800, 600))
     calls = run(monkeypatch, ["resize-pixels", "a.jpg"])
-    assert calls["resize_to_pixels"] == (("a.jpg", 800, 600), {})
+    assert calls["resize_to_pixels"][0] == ("a.jpg", 800, 600)
 
 
 def test_split_n(monkeypatch):
     monkeypatch.setattr(main_mod.dialogs, "ask_value", lambda t, l: "3")
     calls = run(monkeypatch, ["split-n", "a.pdf"])
-    assert calls["split_every_n"] == (("a.pdf", 3), {})
+    assert calls["split_every_n"][0] == ("a.pdf", 3)
 
 
 def test_compress_custom(monkeypatch):
     monkeypatch.setattr(main_mod.dialogs, "ask_value", lambda t, l: "250")
     calls = run(monkeypatch, ["compress-custom", "a.pdf"])
-    assert calls["compress_to_kb"] == (("a.pdf", 250), {})
+    assert calls["compress_to_kb"][0] == ("a.pdf", 250)
+
+
+def test_compress_reports_ladder_steps(monkeypatch):
+    calls = run(monkeypatch, ["compress-500", "a.pdf"])
+    # the tool fn is a capture stub; progress must still be opened and closed
+    assert calls["_progress"].closed
 
 
 def test_merge_reorder_then_merge(monkeypatch):
     monkeypatch.setattr(main_mod.dialogs, "reorder_dialog", lambda p: ["b.pdf", "a.pdf"])
     calls = run(monkeypatch, ["merge", "a.pdf", "b.pdf"])
-    assert calls["merge"] == ((["b.pdf", "a.pdf"],), {})
+    assert calls["merge"][0] == (["b.pdf", "a.pdf"],)
 
 
 def test_merge_cancel_aborts(monkeypatch):

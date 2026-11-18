@@ -15,10 +15,16 @@ def _chunks(total, n):
     return [(s, min(s + n - 1, total)) for s in range(1, total + 1, n)]
 
 
-def merge(paths, out=None):
+def _report(progress, text):
+    if progress:
+        progress(text)
+
+
+def merge(paths, out=None, progress=None):
     base = out or os.path.join(os.path.dirname(paths[0]), "merged.pdf")
     writer = pypdf.PdfWriter()
-    for p in paths:
+    for i, p in enumerate(paths):
+        _report(progress, f"Adding {os.path.basename(p)} ({i + 1} of {len(paths)})...")
         writer.append(p)
     out = tools_common.unique_path(base)
     with open(out, "wb") as f:
@@ -35,25 +41,33 @@ def _write_range(src, first, last, out):
     return out
 
 
-def split_every_page(src):
+def split_every_page(src, progress=None):
     base = os.path.splitext(src)[0]
     total = len(pypdf.PdfReader(src).pages)
-    return [_write_range(src, i, i, tools_common.unique_path(f"{base}_{i}.pdf"))
-            for i in range(1, total + 1)]
+    outs = []
+    for i in range(1, total + 1):
+        _report(progress, f"Writing file {i} of {total}...")
+        outs.append(_write_range(src, i, i, tools_common.unique_path(f"{base}_{i}.pdf")))
+    return outs
 
 
-def split_every_n(src, n):
+def split_every_n(src, n, progress=None):
     base = os.path.splitext(src)[0]
     total = len(pypdf.PdfReader(src).pages)
-    return [_write_range(src, a, b, tools_common.unique_path(f"{base}_{a}-{b}.pdf"))
-            for a, b in _chunks(total, n)]
+    ranges = _chunks(total, n)
+    outs = []
+    for k, (a, b) in enumerate(ranges):
+        _report(progress, f"Writing part {k + 1} of {len(ranges)} (pages {a}-{b})...")
+        outs.append(_write_range(src, a, b, tools_common.unique_path(f"{base}_{a}-{b}.pdf")))
+    return outs
 
 
-def to_images(src):
+def to_images(src, progress=None):
     base = os.path.splitext(src)[0]
     pages = convert_from_path(src, dpi=200, poppler_path=POPLER)
     outs = []
     for i, page in enumerate(pages):
+        _report(progress, f"Saving page {i + 1} of {len(pages)}...")
         suffix = f"_{i + 1}" if len(pages) > 1 else ""
         out = tools_common.unique_path(f"{base}{suffix}.png")
         page.save(out, "PNG")
@@ -81,13 +95,16 @@ def _default_build(pdf_bytes):
     return out.getvalue()
 
 
-def compress_to_kb(src, target_kb, rasterize=_default_rasterize, build=_default_build):
+def compress_to_kb(src, target_kb, rasterize=_default_rasterize, build=_default_build, progress=None):
     """Rasterize at decreasing dpi/quality until the PDF fits target_kb (ceiling)."""
     if os.path.getsize(src) <= target_kb * 1024:
+        _report(progress, "Already under the target size - nothing to do")
         return src
     base = os.path.splitext(src)[0]
     best = None
-    for dpi, quality in ((150, 80), (110, 60), (72, 40)):
+    ladder = ((150, 80), (110, 60), (72, 40))
+    for i, (dpi, quality) in enumerate(ladder):
+        _report(progress, f"Compressing: pass {i + 1} of {len(ladder)} ({dpi} dpi)...")
         data = build(rasterize(src, dpi, quality))
         if len(data) <= target_kb * 1024:
             best = data

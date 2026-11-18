@@ -67,11 +67,12 @@ The script checks, in order, and installs only what is missing:
    and creates `Send To\Merge PDFs.lnk` pointing at the detected launcher.
 
 ### Uninstall
-Run `uninstall.ps1`. It removes the two registry keys (the whole submenu) and
-the Send To shortcut. It deliberately **leaves** `C:\Scripts\imagepdf`,
-Python, the packages, and Poppler installed (general-purpose tools other
-things may use) — delete `C:\Scripts\imagepdf` manually if you want a fully
-clean machine. `uninstall_tools.reg` alone does just the registry part.
+**Double-click `uninstall.bat`** (runs `uninstall.ps1`). It removes the two
+registry keys (the whole submenu) and the Send To shortcut. It deliberately
+**leaves** `C:\Scripts\imagepdf`, Python, the packages, and Poppler installed
+(general-purpose tools other things may use) — delete `C:\Scripts\imagepdf`
+manually if you want a fully clean machine. `uninstall_tools.reg` alone does
+just the registry part.
 
 ### Manual install/uninstall without PowerShell
 Double-click `tools_menu.reg` to add the menu; double-click

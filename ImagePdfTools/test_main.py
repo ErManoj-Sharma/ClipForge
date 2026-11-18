@@ -330,3 +330,24 @@ def test_merge_needs_multiple_files(monkeypatch):
 def test_no_args(monkeypatch):
     calls = run(monkeypatch, [])
     assert calls["error"]
+
+
+def _here(name):
+    return os.path.join(os.path.dirname(os.path.abspath(__file__)), name)
+
+
+def test_menu_has_exactly_one_png_verb():
+    reg = open(_here("tools_menu.reg"), encoding="utf-8").read()
+    assert reg.count('@="Convert to Images (PNG)"') == 1
+    assert reg.count('@="Convert to Images (JPG)"') == 1
+
+
+def test_setup_wipes_stale_submenu_verbs_before_import():
+    setup = open(_here("setup.ps1"), encoding="utf-8").read()
+    stale = "SystemFileAssociations\\.pdf\\shell\\ImagePdfTools"
+    for hive in ("HKCU:\\Software\\Classes", "HKLM:\\Software\\Classes"):
+        assert f"foreach ($root in" in setup
+        assert hive in setup
+        assert stale in setup
+    # the wipe must happen BEFORE reg import, or the current verbs are deleted
+    assert setup.index("Remove-Item -Recurse") < setup.index('reg import "$gen"')

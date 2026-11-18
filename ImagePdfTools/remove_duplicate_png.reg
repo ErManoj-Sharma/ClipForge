@@ -1,0 +1,10 @@
+Windows Registry Editor Version 5.00
+
+; Instant fix: removes the OLD "Convert to Images (PNG)" verb left behind when
+; it was renamed 01_ConvertToImages -> 02_ConvertToImages. Re-importing a .reg
+; never deletes old keys, so both rows used to show. No admin needed.
+; After double-clicking this file, right-click a PDF again (restart Explorer
+; or sign out/in once if Windows cached the old menu).
+; Running setup.bat also does this, plus cleans the same stale keys in HKLM.
+
+[-HKEY_CURRENT_USER\Software\Classes\SystemFileAssociations\.pdf\shell\ImagePdfTools\shell\01_ConvertToImages]

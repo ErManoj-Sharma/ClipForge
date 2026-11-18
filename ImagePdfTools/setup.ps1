@@ -86,13 +86,15 @@ $menu = Get-Content "$src\tools_menu.reg" -Raw
 $menu = $menu.Replace('__PYW__', $pywEsc)
 $gen = "$env:TEMP\tools_menu_generated.reg"
 Set-Content -Path $gen -Value $menu -Encoding Unicode
-reg import "$gen"
-if ($LASTEXITCODE -ne 0) { throw "registry import failed" }
 
-# remove legacy flat context-menu entries (older scripts) that duplicate
-# the suite's submenu items ("Convert to PNG" etc. shown twice)
+# reg import only adds/overwrites - it never deletes verbs that were renamed or
+# removed in a later version. Wipe the whole old submenu tree first (in both
+# hives) so stale keys like 01_ConvertToImages cannot linger as a second
+# "Convert to Images (PNG)" row. Also drop the legacy flat duplicate entries.
 foreach ($root in 'HKCU:\Software\Classes', 'HKLM:\Software\Classes') {
-  foreach ($key in 'SystemFileAssociations\.pdf\shell\ConvertToPNG',
+  foreach ($key in 'SystemFileAssociations\.pdf\shell\ImagePdfTools',
+                   'SystemFileAssociations\image\shell\ImagePdfTools',
+                   'SystemFileAssociations\.pdf\shell\ConvertToPNG',
                    'SystemFileAssociations\.pdf\shell\ConvertToJPEG',
                    'SystemFileAssociations\image\shell\ConvertToPDF',
                    'SystemFileAssociations\image\shell\ConvertToPNG') {
@@ -100,6 +102,9 @@ foreach ($root in 'HKCU:\Software\Classes', 'HKLM:\Software\Classes') {
     if (Test-Path $p) { Remove-Item -Recurse -Force $p -ErrorAction SilentlyContinue }
   }
 }
+
+reg import "$gen"
+if ($LASTEXITCODE -ne 0) { throw "registry import failed" }
 
 if (-not (Test-Path "$dest\main.pyw")) { throw "scripts were not copied to $dest" }
 

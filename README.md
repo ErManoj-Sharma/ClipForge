@@ -80,7 +80,9 @@ restores the **classic full menu as the default first menu** (one HKCU key,
 Explorer restart — setup asks before restarting). That puts Image & PDF Tools
 on the first right-click. Running `uninstall.bat` reverts Windows 11 to its
 default compact menu. (If a future Windows update re-enables the compact
-menu, re-run `setup.bat`.)
+menu, re-run `setup.bat`.) To restore the default compact menu **without**
+uninstalling the tools, double-click `restore_default_menu.bat`; run
+`setup.bat` again to switch back to the classic menu.
 
 ### Manual install/uninstall without PowerShell
 Double-click `tools_menu.reg` to add the menu; double-click

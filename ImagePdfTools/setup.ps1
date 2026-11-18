@@ -89,6 +89,18 @@ Set-Content -Path $gen -Value $menu -Encoding Unicode
 reg import "$gen"
 if ($LASTEXITCODE -ne 0) { throw "registry import failed" }
 
+# remove legacy flat context-menu entries (older scripts) that duplicate
+# the suite's submenu items ("Convert to PNG" etc. shown twice)
+foreach ($root in 'HKCU:\Software\Classes', 'HKLM:\Software\Classes') {
+  foreach ($key in 'SystemFileAssociations\.pdf\shell\ConvertToPNG',
+                   'SystemFileAssociations\.pdf\shell\ConvertToJPEG',
+                   'SystemFileAssociations\image\shell\ConvertToPDF',
+                   'SystemFileAssociations\image\shell\ConvertToPNG') {
+    $p = Join-Path $root $key
+    if (Test-Path $p) { Remove-Item -Recurse -Force $p -ErrorAction SilentlyContinue }
+  }
+}
+
 if (-not (Test-Path "$dest\main.pyw")) { throw "scripts were not copied to $dest" }
 
 $sendTo = [Environment]::GetFolderPath("ApplicationData") + "\Microsoft\Windows\SendTo"

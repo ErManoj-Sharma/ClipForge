@@ -9,27 +9,38 @@ MERGE_QUEUE_FILE = os.path.join(os.environ.get("LOCALAPPDATA", os.path.expanduse
                                 "ImagePdfTools", "merge_selected_queue.txt")
 
 
-def queue_add(path, file=QUEUE_FILE):
+def queue_add(path, file=QUEUE_FILE, ts=None):
     os.makedirs(os.path.dirname(file), exist_ok=True)
     # append instead of read-modify-write: Explorer fires siblings
     # simultaneously, so racing rewrites would silently drop files;
-    # queue_read dedupes instead
+    # queue_read dedupes instead. The timestamp lets a burst ignore
+    # leftovers from previous sessions.
+    t = int(time.time() if ts is None else ts)
     fd = os.open(file, os.O_WRONLY | os.O_CREAT | os.O_APPEND)
     try:
-        os.write(fd, (path + "\n").encode("utf-8"))
+        os.write(fd, f"{t}|{path}\n".encode("utf-8"))
     finally:
         os.close(fd)
 
 
-def queue_read(file=QUEUE_FILE):
+def queue_read(file=QUEUE_FILE, since=0):
     try:
         with open(file, encoding="utf-8") as f:
-            lines = [line for line in f.read().splitlines() if line]
+            lines = f.read().splitlines()
     except FileNotFoundError:
         return []
     seen, out = set(), []
-    for p in lines:
-        if p not in seen:
+    for line in lines:
+        if not line:
+            continue
+        ts_str, sep, p = line.partition("|")
+        if not sep:                      # legacy entry without a timestamp
+            ts_str, p = "0", line
+        try:
+            t = int(ts_str)
+        except ValueError:
+            t, p = 0, line
+        if t >= since and p not in seen:
             seen.add(p)
             out.append(p)
     return out
@@ -73,12 +84,12 @@ def release_lock(path):
 
 
 def wait_queue_stable(file=QUEUE_FILE, timeout=20.0, settle=1.2, poll=0.4,
-                      min_len=0):
+                      min_len=0, since=0):
     """Wait until the queue file stops changing for `settle` seconds (all
     sibling invocations done queuing), then return its items. With min_len,
     keep waiting (up to `timeout`) until at least that many items are queued —
-    covers siblings Explorer spawns late. Returns whatever is queued at the
-    deadline."""
+    covers siblings Explorer spawns late. Entries older than `since` are
+    ignored. Returns whatever is queued at the deadline."""
     deadline = time.time() + timeout
     last_sig = object()
     while True:
@@ -87,7 +98,7 @@ def wait_queue_stable(file=QUEUE_FILE, timeout=20.0, settle=1.2, poll=0.4,
             sig = (st.st_mtime_ns, st.st_size)
         except FileNotFoundError:
             sig = None
-        items = queue_read(file)
+        items = queue_read(file, since=since)
         if sig == last_sig and len(items) >= min_len:
             return items
         last_sig = sig

@@ -1,5 +1,6 @@
 import sys
 import os
+import time
 import tools_common
 import main as main_mod
 
@@ -37,7 +38,10 @@ def run(monkeypatch, argv, queue=None, **overrides):
     monkeypatch.setattr(main_mod.dialogs, "progress_window", lambda title: prog, raising=False)
     # queue helpers: recorded in-memory instead of a real file
     monkeypatch.setattr(main_mod, "queue_read", lambda *a, **k: list(queue or []), raising=False)
-    monkeypatch.setattr(main_mod, "queue_add", lambda p, **k: calls.setdefault("_queue", []).append(p), raising=False)
+    def rec_add(p, **k):
+        calls.setdefault("_queue", []).append(p)
+        calls.setdefault("_queue_files", []).append(k.get("file"))
+    monkeypatch.setattr(main_mod, "queue_add", rec_add, raising=False)
     monkeypatch.setattr(main_mod, "queue_clear", lambda **k: calls.setdefault("_queue_cleared", True), raising=False)
     main_mod.dispatch(argv)
     calls["_progress"] = prog
@@ -172,6 +176,41 @@ def test_queue_add_and_read_roundtrip(tmp_path, monkeypatch):
     assert tools_common.queue_read() == []
 
 
+def test_queue_read_since_filters_stale(tmp_path):
+    import time as _t
+    q = tmp_path / "q.txt"
+    now = int(_t.time())
+    q.write_text(f"{now - 500}|/old.pdf\n{now}|/new.pdf\nplain.pdf\n")
+    # burst collection only sees entries from this burst; the legacy plain
+    # entry counts as old and is filtered too
+    assert tools_common.queue_read(file=str(q), since=now - 10) == ["/new.pdf"]
+    assert tools_common.queue_read(file=str(q)) == ["/old.pdf", "/new.pdf", "plain.pdf"]
+
+
+def test_merge_selected_burst_ignores_stale(tmp_path, monkeypatch):
+    import threading
+    monkeypatch.setattr(tools_common, "LOCK_FILE", str(tmp_path / "merge.lock"))
+    monkeypatch.setattr(main_mod, "MERGE_QUEUE_FILE", str(tmp_path / "msq.txt"))
+    old = int(time.time()) - 60
+    with open(tmp_path / "msq.txt", "w") as f:
+        f.write(f"{old}|/stale.pdf\n")       # leftover from an old session
+    dialogs_seen = []
+    monkeypatch.setattr(main_mod.dialogs, "reorder_dialog",
+                        lambda p: (dialogs_seen.append(sorted(p)), sorted(p))[1])
+    monkeypatch.setattr(main_mod, "_progress", lambda *a, **k: None)
+    prog = FakeProgress()
+    monkeypatch.setattr(main_mod.dialogs, "progress_window", lambda title: prog)
+    monkeypatch.setattr(main_mod, "show_error", lambda *a: None)
+    monkeypatch.setattr(main_mod, "show_info", lambda *a: None)
+    threads = [threading.Thread(target=main_mod._merge_selected, args=(f"/d/{c}.pdf",))
+               for c in "ab"]
+    for t in threads:
+        t.start()
+    for t in threads:
+        t.join()
+    assert dialogs_seen == [["/d/a.pdf", "/d/b.pdf"]]   # stale file excluded
+
+
 def test_queue_add_dispatch(monkeypatch):
     calls = run(monkeypatch, ["queue", "a.pdf"])
     assert calls["_queue"] == ["a.pdf"]
@@ -217,13 +256,19 @@ def test_merge_selected_sibling_exits_silently(monkeypatch):
     assert calls["_queue"] == ["a.pdf"]      # still queues its file
 
 
-def test_merge_selected_too_few_shows_error(monkeypatch):
+def test_merge_selected_single_becomes_queue_add(monkeypatch):
+    # a single selection can't merge: the click means "add to the merge queue"
     monkeypatch.setattr(main_mod, "acquire_lock", lambda: "lock")
     monkeypatch.setattr(main_mod, "wait_queue_stable", lambda *a, **k: ["only.pdf"])
     monkeypatch.setattr(main_mod, "release_lock", lambda p: None)
+    monkeypatch.setattr(main_mod, "show_info", lambda m: calls_ok.append(m))
+    calls_ok = []
     calls = run(monkeypatch, ["merge-selected", "only.pdf"])
-    assert "merge" not in calls and calls["error"]
-    assert calls["_queue_cleared"]           # burst list wiped even on error
+    assert "merge" not in calls and "error" not in calls
+    assert calls_ok                          # confirmation shown, not an error
+    assert calls["_queue"] == ["only.pdf", "only.pdf"]
+    assert calls["_queue_files"][0] == main_mod.MERGE_QUEUE_FILE  # burst add
+    assert calls["_queue_files"][1] != main_mod.MERGE_QUEUE_FILE  # explicit queue
 
 
 def test_merge_selected_cancel_clears_queue(monkeypatch):

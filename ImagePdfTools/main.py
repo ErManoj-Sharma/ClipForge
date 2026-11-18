@@ -2,6 +2,7 @@
 Usage: pyw.exe main.pyw <action> <file> [file...]
 """
 import sys
+import time
 import traceback
 
 import tools
@@ -19,6 +20,11 @@ COMPRESS_KB = {"compress-100": 100, "compress-500": 500,
 def show_error(msg):
     import tkinter.messagebox as mb
     mb.showerror("Image & PDF Tools", msg)
+
+
+def show_info(msg):
+    import tkinter.messagebox as mb
+    mb.showinfo("Image & PDF Tools", msg)
 
 
 def _progress(title, fn, *args, **kwargs):
@@ -55,9 +61,13 @@ def _merge_selected(src):
     so every invocation queues its file; the first one to win the lock watches
     the queue until the siblings finish, then opens the merge dialog once.
     The lock is held until the whole session ends (dialog included) so no
-    straggler can open a second dialog, and the burst list is wiped at the
-    end either way so the next right-click starts fresh."""
-    queue_add(src, file=MERGE_QUEUE_FILE)
+    straggler can open a second dialog. Only files queued during this burst
+    count (timestamp filter), so leftovers from previous sessions never
+    sneak into the merge. With a single selection nothing else arrives: the
+    click then means "add to the merge queue" and 'Merge Queued PDFs'
+    finishes the job."""
+    burst_start = int(time.time()) - 2
+    queue_add(src, file=MERGE_QUEUE_FILE, ts=burst_start)
     lock = acquire_lock()
     if lock is None:
         return  # a sibling invocation is already handling the dialog
@@ -66,11 +76,15 @@ def _merge_selected(src):
         win = dialogs.progress_window("Collecting selected PDFs...")
         try:
             items = wait_queue_stable(file=MERGE_QUEUE_FILE, min_len=2,
-                                      timeout=8)
+                                      timeout=8, since=burst_start)
         finally:
             win.close()
         if len(items) < 2:
-            show_error("Select at least two PDFs to merge")
+            # single selection: the click meant "add to the merge queue"
+            queue_add(src)
+            show_info("Added to the merge queue.\n\nSelect more PDFs and use "
+                      "'Merge Selected PDFs', or right-click a PDF and use "
+                      "'Merge Queued PDFs' to merge what's queued.")
             return
         ordered = dialogs.reorder_dialog(items)
         if ordered is not None:

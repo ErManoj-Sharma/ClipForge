@@ -25,7 +25,7 @@ copy that one folder to Windows; on the machine it deploys to `C:\Scripts\imagep
 
 | Menu item                              | What it does                                                            |
 |----------------------------------------|-------------------------------------------------------------------------|
-| Merge Selected PDFs                    | One-step merge of all selected PDFs (opens once, see below)             |
+| Merge Selected PDFs                    | 2+ selected: merge dialog. 1 selected: adds it to the merge queue       |
 | Convert to Images (PNG)                | Each page → `.png` at 200 dpi (multi-page: `file_1.png`, `file_2.png`…) |
 | Convert to Images (JPG)                | Each page → `.jpg` at 200 dpi, quality 90 — much smaller for photo pages |
 | Contact Developer                      | Opens the developer's links page in your browser                        |
@@ -46,14 +46,17 @@ copy that one folder to Windows; on the machine it deploys to `C:\Scripts\imagep
    itself to a shared list and the first one (holding a lock that is held
    until the whole session ends) opens the dialog once — no matter how many
    files are selected, and later straggler processes never open a second
-   dialog. A canceled or errored burst is wiped, so the next right-click
-   starts fresh. Selecting a single PDF shows "Collecting…" for up to 8s
-   (waiting for siblings that Explorer may spawn late) and then a clear
-   error.
+   dialog. Only files from the current selection count (timestamp filter), so
+   leftovers from earlier sessions never sneak into the merge.
+   **With a single PDF selected**, the same item acts as **add to the merge
+   queue**: a confirmation pops up and the file lands in the queue — then
+   finish with **Merge Queued PDFs** whenever you like. (The menu itself
+   can't change per selection — the registry can't count selected files — so
+   the verb adapts at runtime instead.)
 2. **Queue for Merge / Merge Queued PDFs (right-click menu, explicit):**
    select PDFs → **Queue for Merge** (queues each) → **Merge Queued PDFs** →
    reorder dialog → **Merge**. Queue clears on success, stays if you Cancel
-   so you can retry.
+   so you can retry. Single-click "Merge Selected PDFs" also feeds this queue.
 3. **Send To (one step, legacy):** select the PDFs → right-click → **Send To →
    Merge PDFs** — Explorer passes all selected files at once, straight to the
    reorder dialog.
@@ -87,7 +90,11 @@ The script checks, in order, and installs only what is missing:
    the pinned GitHub release (`oschwartz10612/poppler-windows v24.08.0-0`) and
    extracts it there — exactly the path the code hardcodes.
 4. **Scripts** — copies the 7 `.py`/`.pyw` files to `C:\Scripts\imagepdf`.
-5. **Registry + shortcut** — imports `tools_menu.reg` (right-click submenu)
+5. **Legacy cleanup** — deletes the old flat "Convert to PNG / JPEG / PDF"
+   context-menu entries from the earlier scripts, which duplicated the
+   submenu items (the old script files stay on disk; "Send to WSL" is
+   untouched).
+6. **Registry + shortcut** — imports `tools_menu.reg` (right-click submenu)
    and creates `Send To\Merge PDFs.lnk` pointing at the detected launcher.
 
 ### Uninstall
@@ -262,8 +269,8 @@ additionally verified with real concurrent-process simulations on Linux.
 - Merge-selected: if Explorer launches the per-file processes more than ~1.2s
   apart (e.g. extreme anti-virus delays), the burst can split into two
   dialogs; a sibling arriving while the dialog is already open is silently
-  dropped from that merge. Selecting a single PDF waits up to 8s (collecting)
-  before erroring.
+  dropped from that merge. With a single PDF selected the click waits up to 8s
+  (collecting possible siblings) before acting as "add to the merge queue".
 - Merge accepts whatever files you send (it doesn't filter by extension);
   a non-PDF will surface an error box.
 - Poppler path is hardcoded; moving `C:\poppler` requires updating

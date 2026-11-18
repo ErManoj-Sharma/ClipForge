@@ -75,42 +75,57 @@ def to_images(src, progress=None):
     return outs
 
 
-def _default_rasterize(src, dpi, quality):
-    """Pages -> JPEG bytes of a rebuilt single PDF at given dpi/quality."""
-    pages = convert_from_path(src, dpi=dpi, poppler_path=POPLER)
-    jpgs = []
-    for page in pages:
-        buf = BytesIO()
-        page.convert("RGB").save(buf, "JPEG", quality=quality)
-        jpgs.append(buf.getvalue())
-    return img2pdf.convert(jpgs)
+def _default_render(src, dpi):
+    return convert_from_path(src, dpi=dpi, poppler_path=POPLER)
 
 
-def _default_build(pdf_bytes):
-    buf = BytesIO(pdf_bytes)
-    writer = pypdf.PdfWriter()
-    writer.append(buf)
-    out = BytesIO()
-    writer.write(out)
-    return out.getvalue()
+def _default_encode(page, quality):
+    buf = BytesIO()
+    page.convert("RGB").save(buf, "JPEG", quality=quality)
+    return buf.getvalue()
 
 
-def compress_to_kb(src, target_kb, rasterize=_default_rasterize, build=_default_build, progress=None):
-    """Rasterize at decreasing dpi/quality until the PDF fits target_kb (ceiling)."""
+def _default_build(jpg_blobs):
+    return img2pdf.convert(jpg_blobs)
+
+
+def compress_to_kb(src, target_kb, render=_default_render, encode=_default_encode,
+                   build=_default_build, progress=None):
+    """Rebuild the PDF from page images, maximizing quality under target_kb.
+
+    For each dpi (high to low) a binary search finds the highest JPEG quality
+    whose rebuilt size fits the target; the first dpi where anything fits wins,
+    so output lands as close to the target as quality steps allow.
+    """
     if os.path.getsize(src) <= target_kb * 1024:
         _report(progress, "Already under the target size - nothing to do")
         return src
     base = os.path.splitext(src)[0]
-    best = None
-    ladder = ((150, 80), (110, 60), (72, 40))
-    for i, (dpi, quality) in enumerate(ladder):
-        _report(progress, f"Compressing: pass {i + 1} of {len(ladder)} ({dpi} dpi)...")
-        data = build(rasterize(src, dpi, quality))
-        if len(data) <= target_kb * 1024:
-            best = data
+    target = target_kb * 1024
+    fallback = None  # smallest attempt, used if nothing fits anywhere
+    for dpi in (200, 150, 110, 72):
+        _report(progress, f"Rendering pages at {dpi} dpi...")
+        pages = render(src, dpi)
+        best = None
+        smallest = None
+        lo, hi = 1, 95
+        while lo <= hi:
+            mid = (lo + hi) // 2
+            _report(progress, f"{dpi} dpi: trying JPEG quality {mid}...")
+            data = build([encode(p, mid) for p in pages])
+            n = len(data)
+            if n <= target:
+                best = data
+                lo = mid + 1
+            else:
+                if smallest is None or n < len(smallest):
+                    smallest = data
+                hi = mid - 1
+        if best is not None:
             break
-        best = data  # keep smallest attempt for best effort
+        if smallest is not None and (fallback is None or len(smallest) < len(fallback)):
+            fallback = smallest
     out = tools_common.unique_path(f"{base}_compressed.pdf")
     with open(out, "wb") as f:
-        f.write(best)
+        f.write(best if best is not None else fallback)
     return out

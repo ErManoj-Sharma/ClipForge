@@ -164,12 +164,16 @@ page range. Every-page: `file_1.pdf`…; every-N: ranges `1-3`, `4-6`, `7-7`
 the reorder dialog → `merged.pdf`.
 
 **Compress to KB** — there is no library that compresses arbitrary PDFs to an
-exact size, so the pages are **rasterized**: a quality ladder tries
-`(150 dpi, q80) → (110 dpi, q60) → (72 dpi, q40)`, rebuilding the PDF from
-JPEG page images (`img2pdf`) after each step; the first result under the
-target wins, otherwise the smallest attempt is written. If the PDF is already
-under the target, nothing is done. **Lossy** — pages become images, text
-becomes non-selectable. This is the trade for guaranteed size ceilings.
+exact size, so the pages are **rasterized** and the PDF is rebuilt from JPEG
+page images. The algorithm maximizes quality under the target: for each dpi
+(200 → 150 → 110 → 72) a **binary search over JPEG quality (95→1)** finds the
+*highest* quality whose rebuilt size fits the target — the first dpi where
+anything fits wins, so the output lands **just under the target** (e.g. 90–99
+KB for a 100 KB request) at the best quality those steps allow. If nothing
+fits at any dpi, the smallest attempt is written. Pages are rendered once per
+dpi (the expensive step); re-encoding at different qualities is cheap.
+**Lossy** — pages become images, text becomes non-selectable. This is the
+trade for guaranteed size ceilings.
 
 ### 3.4 The dialogs (`dialogs.py`)
 

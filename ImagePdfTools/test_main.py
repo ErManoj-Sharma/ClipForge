@@ -36,9 +36,9 @@ def run(monkeypatch, argv, queue=None, **overrides):
     prog = FakeProgress()
     monkeypatch.setattr(main_mod.dialogs, "progress_window", lambda title: prog, raising=False)
     # queue helpers: recorded in-memory instead of a real file
-    monkeypatch.setattr(main_mod, "queue_read", lambda: list(queue or []), raising=False)
-    monkeypatch.setattr(main_mod, "queue_add", lambda p: calls.setdefault("_queue", []).append(p), raising=False)
-    monkeypatch.setattr(main_mod, "queue_clear", lambda: calls.setdefault("_queue_cleared", True), raising=False)
+    monkeypatch.setattr(main_mod, "queue_read", lambda *a, **k: list(queue or []), raising=False)
+    monkeypatch.setattr(main_mod, "queue_add", lambda p, **k: calls.setdefault("_queue", []).append(p), raising=False)
+    monkeypatch.setattr(main_mod, "queue_clear", lambda **k: calls.setdefault("_queue_cleared", True), raising=False)
     main_mod.dispatch(argv)
     calls["_progress"] = prog
     return calls
@@ -115,6 +115,16 @@ def test_release_lock_missing_is_safe(tmp_path, monkeypatch):
     tools_common.release_lock(str(tmp_path / "nope.lock"))  # no crash
 
 
+def test_acquire_lock_steals_stale_lock(tmp_path, monkeypatch):
+    import time as _t
+    lock = tmp_path / "merge.lock"
+    monkeypatch.setattr(tools_common, "LOCK_FILE", str(lock))
+    lock.write_text("999")
+    old = _t.time() - 1000          # a crashed session left this behind
+    os.utime(lock, (old, old))
+    assert tools_common.acquire_lock() is not None   # stolen, not rejected
+
+
 def test_wait_queue_stable_returns_after_settle(tmp_path, monkeypatch):
     import time as _t
     q = tmp_path / "q.txt"
@@ -130,13 +140,24 @@ def test_wait_queue_stable_returns_after_settle(tmp_path, monkeypatch):
         return orig_stat(p, *a, **k)
     fake_stat.grown = False
     monkeypatch.setattr(tools_common.os, "stat", fake_stat)
-    items = tools_common.wait_queue_stable(timeout=10, settle=0.2, poll=0.1)
+    items = tools_common.wait_queue_stable(file=str(q), timeout=10, settle=0.2, poll=0.1)
     assert items == ["/a.pdf", "/b.pdf", "/c.pdf"]
 
 
 def test_wait_queue_stable_empty_queue(tmp_path, monkeypatch):
-    monkeypatch.setattr(tools_common, "QUEUE_FILE", str(tmp_path / "missing.txt"))
-    assert tools_common.wait_queue_stable(timeout=2, settle=0.1, poll=0.05) == []
+    assert tools_common.wait_queue_stable(file=str(tmp_path / "missing.txt"),
+                                          timeout=2, settle=0.1, poll=0.05) == []
+
+
+def test_wait_queue_stable_min_len_keeps_waiting(tmp_path):
+    import time as _t
+    q = tmp_path / "q.txt"
+    q.write_text("/a.pdf\n")   # stable from the start, but too few
+    t0 = _t.time()
+    items = tools_common.wait_queue_stable(file=str(q), timeout=0.5,
+                                           settle=0.1, poll=0.05, min_len=2)
+    assert items == ["/a.pdf"]
+    assert _t.time() - t0 >= 0.4   # waited for late siblings, not early-returned
 
 
 def test_queue_add_and_read_roundtrip(tmp_path, monkeypatch):
@@ -175,16 +196,18 @@ def test_merge_queue_cancel_keeps_queue(monkeypatch):
 
 
 def test_merge_selected_winner_merges_queue(monkeypatch):
+    events = []
     monkeypatch.setattr(main_mod, "wait_queue_stable", lambda *a, **k: ["b.pdf", "a.pdf"])
     monkeypatch.setattr(main_mod, "acquire_lock", lambda: "lock")
-    released = []
-    monkeypatch.setattr(main_mod, "release_lock", lambda p: released.append(p))
-    monkeypatch.setattr(main_mod.dialogs, "reorder_dialog", lambda p: ["a.pdf", "b.pdf"])
+    monkeypatch.setattr(main_mod, "release_lock", lambda p: events.append("release"))
+    monkeypatch.setattr(main_mod.dialogs, "reorder_dialog",
+                        lambda p: (events.append("dialog"), ["a.pdf", "b.pdf"])[1])
     calls = run(monkeypatch, ["merge-selected", "a.pdf"], queue=["a.pdf", "b.pdf"])
     assert calls["merge"][0] == (["a.pdf", "b.pdf"],)
     assert calls["_queue"] == ["a.pdf"]      # this invocation queued its file
-    assert released == ["lock"]
     assert calls["_queue_cleared"]           # queue consumed
+    # lock is held through the dialog: released only after it closed
+    assert events.index("dialog") < events.index("release")
 
 
 def test_merge_selected_sibling_exits_silently(monkeypatch):
@@ -200,6 +223,41 @@ def test_merge_selected_too_few_shows_error(monkeypatch):
     monkeypatch.setattr(main_mod, "release_lock", lambda p: None)
     calls = run(monkeypatch, ["merge-selected", "only.pdf"])
     assert "merge" not in calls and calls["error"]
+    assert calls["_queue_cleared"]           # burst list wiped even on error
+
+
+def test_merge_selected_cancel_clears_queue(monkeypatch):
+    # a canceled dialog must not leak files into the next right-click burst
+    monkeypatch.setattr(main_mod, "acquire_lock", lambda: "lock")
+    monkeypatch.setattr(main_mod, "wait_queue_stable", lambda *a, **k: ["a.pdf", "b.pdf"])
+    monkeypatch.setattr(main_mod, "release_lock", lambda p: None)
+    monkeypatch.setattr(main_mod.dialogs, "reorder_dialog", lambda p: None)
+    calls = run(monkeypatch, ["merge-selected", "a.pdf"])
+    assert "merge" not in calls and calls["_queue_cleared"]
+
+
+def test_merge_selected_concurrent_single_dialog(tmp_path, monkeypatch):
+    import threading
+    monkeypatch.setattr(tools_common, "LOCK_FILE", str(tmp_path / "merge.lock"))
+    monkeypatch.setattr(main_mod, "MERGE_QUEUE_FILE", str(tmp_path / "ms_queue.txt"))
+    dialogs_seen = []
+    monkeypatch.setattr(main_mod.dialogs, "reorder_dialog",
+                        lambda p: (dialogs_seen.append(sorted(p)), sorted(p))[1])
+    monkeypatch.setattr(main_mod, "_progress", lambda *a, **k: None)
+    prog = FakeProgress()
+    monkeypatch.setattr(main_mod.dialogs, "progress_window", lambda title: prog)
+    errors = []
+    monkeypatch.setattr(main_mod, "show_error", lambda *a: errors.append(a))
+    threads = [threading.Thread(target=main_mod._merge_selected, args=(f"/d/{c}.pdf",))
+               for c in "abcde"]
+    for t in threads:
+        t.start()
+    for t in threads:
+        t.join()
+    # exactly one dialog, containing all five files
+    assert dialogs_seen == [sorted(f"/d/{c}.pdf" for c in "abcde")]
+    assert not errors
+    assert not os.path.exists(tmp_path / "ms_queue.txt")  # session wiped the list
 
 
 def test_unknown_action(monkeypatch):

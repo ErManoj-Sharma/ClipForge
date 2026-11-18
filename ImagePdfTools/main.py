@@ -7,7 +7,8 @@ import traceback
 import tools
 import dialogs
 from tools_common import (queue_add, queue_read, queue_clear,
-                          acquire_lock, release_lock, wait_queue_stable)
+                          acquire_lock, release_lock, wait_queue_stable,
+                          MERGE_QUEUE_FILE)
 
 RESIZE_KB = {"resize-kb-50": 50, "resize-kb-100": 100,
              "resize-kb-150": 150, "resize-kb-300": 300}
@@ -52,22 +53,31 @@ def _val(title, label):
 def _merge_selected(src):
     """'Merge Selected PDFs': Explorer fires this verb once per selected file,
     so every invocation queues its file; the first one to win the lock watches
-    the queue until the siblings finish, then opens the merge dialog once."""
-    queue_add(src)
+    the queue until the siblings finish, then opens the merge dialog once.
+    The lock is held until the whole session ends (dialog included) so no
+    straggler can open a second dialog, and the burst list is wiped at the
+    end either way so the next right-click starts fresh."""
+    queue_add(src, file=MERGE_QUEUE_FILE)
     lock = acquire_lock()
     if lock is None:
         return  # a sibling invocation is already handling the dialog
     try:
-        items = wait_queue_stable()
+        # visible feedback while waiting for the sibling invocations
+        win = dialogs.progress_window("Collecting selected PDFs...")
+        try:
+            items = wait_queue_stable(file=MERGE_QUEUE_FILE, min_len=2,
+                                      timeout=8)
+        finally:
+            win.close()
+        if len(items) < 2:
+            show_error("Select at least two PDFs to merge")
+            return
+        ordered = dialogs.reorder_dialog(items)
+        if ordered is not None:
+            _progress("Merging PDFs...", tools.merge, ordered)
     finally:
+        queue_clear(file=MERGE_QUEUE_FILE)
         release_lock(lock)
-    if len(items) < 2:
-        show_error("Select at least two PDFs to merge")
-        return
-    ordered = dialogs.reorder_dialog(items)
-    if ordered is not None:
-        _progress("Merging PDFs...", tools.merge, ordered)
-        queue_clear()
 
 
 def dispatch(argv):

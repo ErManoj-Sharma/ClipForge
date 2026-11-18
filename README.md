@@ -35,11 +35,17 @@ copy that one folder to Windows; on the machine it deploys to `C:\Scripts\imagep
 **Merging PDFs — three ways**
 
 1. **Merge Selected PDFs (one step, right-click menu):** select 2+ PDFs →
-   right-click → **Merge Selected PDFs** → reorder dialog (Up/Down sets page
-   order) → **Merge**. Behind the scenes each selected file's invocation adds
-   itself to a queue and the first one (holding a lock) opens the dialog once
-   with all of them — feels like a single direct merge. Cancel keeps nothing
-   queued; duplicate selections are ignored.
+   right-click → **Merge Selected PDFs** → a brief "Collecting selected
+   PDFs…" window appears while the files are gathered, then the reorder dialog
+   opens **once** with all of them (Up/Down sets page order, **Remove** drops
+   a file) → **Merge**. Behind the scenes each selected file's invocation adds
+   itself to a shared list and the first one (holding a lock that is held
+   until the whole session ends) opens the dialog once — no matter how many
+   files are selected, and later straggler processes never open a second
+   dialog. A canceled or errored burst is wiped, so the next right-click
+   starts fresh. Selecting a single PDF shows "Collecting…" for up to 8s
+   (waiting for siblings that Explorer may spawn late) and then a clear
+   error.
 2. **Queue for Merge / Merge Queued PDFs (right-click menu, explicit):**
    select PDFs → **Queue for Merge** (queues each) → **Merge Queued PDFs** →
    reorder dialog → **Merge**. Queue clears on success, stays if you Cancel

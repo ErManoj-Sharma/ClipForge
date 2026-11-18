@@ -67,6 +67,11 @@ Windows Registry Editor Version 5.00
 [HKEY_CURRENT_USER\Software\Classes\SystemFileAssociations\.pdf\shell\ImagePdfTools\shell\02_ConvertToImages\command]
 @="__PYW__ \"C:\\Scripts\\imagepdf\\main.pyw\" pdf-to-images \"%1\""
 
+[HKEY_CURRENT_USER\Software\Classes\SystemFileAssociations\.pdf\shell\ImagePdfTools\shell\02_ConvertToImagesJPG]
+@="Convert to Images (JPG)"
+[HKEY_CURRENT_USER\Software\Classes\SystemFileAssociations\.pdf\shell\ImagePdfTools\shell\02_ConvertToImagesJPG\command]
+@="__PYW__ \"C:\\Scripts\\imagepdf\\main.pyw\" pdf-to-images-jpg \"%1\""
+
 [HKEY_CURRENT_USER\Software\Classes\SystemFileAssociations\.pdf\shell\ImagePdfTools\shell\02_SplitEveryPage]
 @="Split Every Page"
 [HKEY_CURRENT_USER\Software\Classes\SystemFileAssociations\.pdf\shell\ImagePdfTools\shell\02_SplitEveryPage\command]

@@ -21,11 +21,11 @@ def show_error(msg):
     mb.showerror("Image & PDF Tools", msg)
 
 
-def _progress(title, fn, *args):
+def _progress(title, fn, *args, **kwargs):
     """Run a slow tool with the 'Working...' window showing live steps."""
     p = dialogs.progress_window(title)
     try:
-        fn(*args, progress=p)
+        fn(*args, progress=p, **kwargs)
     finally:
         p.close()
 
@@ -108,6 +108,9 @@ def dispatch(argv):
             _busy("Converting to JPG...", tools.to_jpg, src)
         elif action == "pdf-to-images":
             _progress("Converting PDF to images...", tools.to_images, src)
+        elif action == "pdf-to-images-jpg":
+            _progress("Converting PDF to images...", tools.to_images, src,
+                      fmt="JPEG")
         elif action == "split-page":
             _progress("Splitting PDF...", tools.split_every_page, src)
         elif action == "split-n":

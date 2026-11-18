@@ -62,15 +62,20 @@ def split_every_n(src, n, progress=None):
     return outs
 
 
-def to_images(src, progress=None):
+def to_images(src, progress=None, fmt="PNG"):
     base = os.path.splitext(src)[0]
+    jpg = fmt.upper() in ("JPEG", "JPG")
     pages = convert_from_path(src, dpi=200, poppler_path=POPLER)
     outs = []
     for i, page in enumerate(pages):
         _report(progress, f"Saving page {i + 1} of {len(pages)}...")
         suffix = f"_{i + 1}" if len(pages) > 1 else ""
-        out = tools_common.unique_path(f"{base}{suffix}.png")
-        page.save(out, "PNG")
+        out = tools_common.unique_path(f"{base}{suffix}.{'jpg' if jpg else 'png'}")
+        if jpg:
+            # PDF pages can carry alpha; JPEG needs plain RGB
+            page.convert("RGB").save(out, "JPEG", quality=90)
+        else:
+            page.save(out, "PNG")
         outs.append(out)
     return outs
 

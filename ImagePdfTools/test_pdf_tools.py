@@ -149,3 +149,41 @@ def test_compress_best_effort_when_nothing_fits(tmp_path):
                                    encode_png=encode_png, build=build)
     assert len(open(out, "rb").read()) == 1200  # smallest attempt wins
     assert renders == [200, 150, 110, 72, 50, 40]
+
+
+class FakePage:
+    def __init__(self):
+        self.calls = []
+
+    def convert(self, mode):
+        self.calls.append(("convert", mode))
+        return self
+
+    def save(self, path, fmt=None, **kw):
+        self.calls.append(("save", path, fmt, kw))
+
+
+def fake_convert(monkeypatch, n_pages=2):
+    pages = [FakePage() for _ in range(n_pages)]
+    monkeypatch.setattr(pdf_tools, "convert_from_path", lambda *a, **k: pages)
+    return pages
+
+
+def test_to_images_png_default(tmp_path, monkeypatch):
+    src = str(tmp_path / "doc.pdf")
+    open(src, "wb").write(b"x")
+    pages = fake_convert(monkeypatch)
+    outs = pdf_tools.to_images(src)
+    assert outs == [str(tmp_path / "doc_1.png"), str(tmp_path / "doc_2.png")]
+    assert pages[0].calls == [("save", outs[0], "PNG", {})]
+
+
+def test_to_images_jpg(tmp_path, monkeypatch):
+    src = str(tmp_path / "doc.pdf")
+    open(src, "wb").write(b"x")
+    pages = fake_convert(monkeypatch)
+    outs = pdf_tools.to_images(src, fmt="JPEG")
+    assert outs == [str(tmp_path / "doc_1.jpg"), str(tmp_path / "doc_2.jpg")]
+    # pages must be flattened to RGB (PDF pages may have alpha) before JPEG
+    assert pages[0].calls == [("convert", "RGB"),
+                              ("save", outs[0], "JPEG", {"quality": 90})]

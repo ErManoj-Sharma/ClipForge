@@ -265,6 +265,18 @@ def test_unknown_action(monkeypatch):
     assert calls["error"][0].startswith("Unknown action")
 
 
+def test_pdf_to_images_png(monkeypatch):
+    calls = run(monkeypatch, ["pdf-to-images", "a.pdf"])
+    assert calls["to_images"][0] == ("a.pdf",)
+    assert calls["to_images"][1].get("fmt", "PNG") == "PNG"
+
+
+def test_pdf_to_images_jpg(monkeypatch):
+    calls = run(monkeypatch, ["pdf-to-images-jpg", "a.pdf"])
+    assert calls["to_images"][0] == ("a.pdf",)
+    assert calls["to_images"][1].get("fmt") == "JPEG"
+
+
 def test_merge_needs_multiple_files(monkeypatch):
     calls = run(monkeypatch, ["merge", "a.pdf"])
     assert "merge" not in calls and calls["error"]

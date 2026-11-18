@@ -11,8 +11,7 @@ firing, Tkinter dialogs). Each item lists where the work would land.
 | 1 | **Multi-image → one PDF** — select several images → right-click → merge into a single multi-page PDF (same queue/lock trick as Merge Selected PDFs, but `to_pdf` appends pages instead of files) | The #1 gap: converting a scan batch into one document is the most common image+PDF workflow | `image_tools.py` (`to_pdf_multi`), `main.py` action, 1 reg verb under `image` | M |
 | 2 | **Open output folder after long actions** — after compress/split/merge finishes, a "Done — Show files" button (or auto-open Explorer) so results are obvious | Slow operations currently end silently; users wonder if it worked | `main.py` `_progress` → after completion show a small done-dialog with a Show button (`explorer /select,<file>`) | S |
 | 3 | **Cancel button that actually cancels** — long ops (compress 1–2 min) currently keep running after the window closes; a real cancel flag checked between render/encode steps | Users close the window expecting the work to stop | `dialogs.progress_window` → `.cancelled` flag; `pdf_tools.compress_to_kb` checks it per attempt | S–M |
-| 4 | **JPG option for PDF→Images** — menu item "Convert to Images (JPG)" alongside PNG | PNG of photo pages is huge; JPG pages are ~10× smaller | `pdf_tools.to_images(fmt=...)`, 1 reg verb | S |
-| 5 | **Remember dialog positions & last values** — save last window pos + last custom KB / N values to `%LOCALAPPDATA%\ImagePdfTools\settings.json`, prefill next time | Repeated workflows (always 100 KB, always split by 3) shouldn't need retyping | `tools_common` tiny load/save, `dialogs` prefill | S |
+| 4 | **Remember dialog positions & last values** — save last window pos + last custom KB / N values to `%LOCALAPPDATA%\ImagePdfTools\settings.json`, prefill next time | Repeated workflows (always 100 KB, always split by 3) shouldn't need retyping | `tools_common` tiny load/save, `dialogs` prefill | S |
 
 ## Medium priority
 

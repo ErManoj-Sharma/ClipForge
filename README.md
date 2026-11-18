@@ -26,6 +26,7 @@ copy that one folder to Windows; on the machine it deploys to `C:\Scripts\imagep
 |----------------------------------------|-------------------------------------------------------------------------|
 | Merge Selected PDFs                    | One-step merge of all selected PDFs (opens once, see below)             |
 | Convert to Images (PNG)                | Each page → `.png` at 200 dpi (multi-page: `file_1.png`, `file_2.png`…) |
+| Convert to Images (JPG)                | Each page → `.jpg` at 200 dpi, quality 90 — much smaller for photo pages |
 | Split Every Page                       | `file.pdf` → `file_1.pdf`, `file_2.pdf`, … (one page each)              |
 | Split Every N Pages…                   | Type N → chunks of N pages (`file_1-3.pdf`, `file_4-6.pdf`…)            |
 | Compress to 100 / 500 KB / 1 MB / 2 MB | Rebuild the PDF smaller than that ceiling                               |
@@ -183,7 +184,11 @@ become JPG.
 
 **PDF → Images** — `pdf2image.convert_from_path` at **200 dpi** using the
 Poppler DLLs at `C:\poppler\poppler-24.08.0\Library\bin` (move Poppler and
-this path must change). One PNG per page, `_1`, `_2`… suffixes on multi-page.
+this path must change). One image per page, `_1`, `_2`… suffixes on
+multi-page. **PNG** (default) for lossless pages; the **JPG** variant
+flattens each page to RGB and saves at quality 90 — JPG is the right choice
+for photo/scanned pages (≈7× smaller in tests) but *larger* than PNG for
+dense screenshot pages, where PNG's lossless compression wins.
 
 **Split** — `pypdf` reads the page count, then each output writer copies a
 page range. Every-page: `file_1.pdf`…; every-N: ranges `1-3`, `4-6`, `7-7`

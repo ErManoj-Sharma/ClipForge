@@ -32,17 +32,23 @@ copy that one folder to Windows; on the machine it deploys to `C:\Scripts\imagep
 | Queue for Merge                        | Add to merge queue — on multi-select each file queues itself            |
 | Merge Queued PDFs                      | Reorder + merge the queue, then clear it                                |
 
-**Merging PDFs — two ways**
+**Merging PDFs — three ways**
 
-1. **Right-click menu (multi-select):** select the PDFs → right-click →
-   **Queue for Merge** (each selected file is queued) → right-click again →
-   **Merge Queued PDFs** → reorder dialog (Up/Down sets page order) → **Merge**.
-   Result: `merged.pdf` next to the first queued file; the queue clears on
-   success, and stays if you Cancel so you can retry. Queuing the same file
-   twice is ignored.
-2. **Send To (one step):** select the PDFs → right-click → **Send To →
+1. **Merge Selected PDFs (one step, right-click menu):** select 2+ PDFs →
+   right-click → **Merge Selected PDFs** → reorder dialog (Up/Down sets page
+   order) → **Merge**. Behind the scenes each selected file's invocation adds
+   itself to a queue and the first one (holding a lock) opens the dialog once
+   with all of them — feels like a single direct merge. Cancel keeps nothing
+   queued; duplicate selections are ignored.
+2. **Queue for Merge / Merge Queued PDFs (right-click menu, explicit):**
+   select PDFs → **Queue for Merge** (queues each) → **Merge Queued PDFs** →
+   reorder dialog → **Merge**. Queue clears on success, stays if you Cancel
+   so you can retry.
+3. **Send To (one step, legacy):** select the PDFs → right-click → **Send To →
    Merge PDFs** — Explorer passes all selected files at once, straight to the
    reorder dialog.
+
+Result in all cases: `merged.pdf` next to the first file.
 
 ### Rules that apply everywhere
 - Output is always saved **next to the input file**.

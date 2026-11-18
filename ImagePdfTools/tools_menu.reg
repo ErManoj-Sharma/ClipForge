@@ -57,9 +57,14 @@ Windows Registry Editor Version 5.00
 "SubCommands"=""
 "Icon"="imageres.dll,-5305"
 
-[HKEY_CURRENT_USER\Software\Classes\SystemFileAssociations\.pdf\shell\ImagePdfTools\shell\01_ConvertToImages]
+[HKEY_CURRENT_USER\Software\Classes\SystemFileAssociations\.pdf\shell\ImagePdfTools\shell\01_MergeSelected]
+@="Merge Selected PDFs"
+[HKEY_CURRENT_USER\Software\Classes\SystemFileAssociations\.pdf\shell\ImagePdfTools\shell\01_MergeSelected\command]
+@="__PYW__ \"C:\\Scripts\\imagepdf\\main.pyw\" merge-selected \"%1\""
+
+[HKEY_CURRENT_USER\Software\Classes\SystemFileAssociations\.pdf\shell\ImagePdfTools\shell\02_ConvertToImages]
 @="Convert to Images (PNG)"
-[HKEY_CURRENT_USER\Software\Classes\SystemFileAssociations\.pdf\shell\ImagePdfTools\shell\01_ConvertToImages\command]
+[HKEY_CURRENT_USER\Software\Classes\SystemFileAssociations\.pdf\shell\ImagePdfTools\shell\02_ConvertToImages\command]
 @="__PYW__ \"C:\\Scripts\\imagepdf\\main.pyw\" pdf-to-images \"%1\""
 
 [HKEY_CURRENT_USER\Software\Classes\SystemFileAssociations\.pdf\shell\ImagePdfTools\shell\02_SplitEveryPage]

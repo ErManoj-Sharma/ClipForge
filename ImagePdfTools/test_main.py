@@ -1,4 +1,6 @@
 import sys
+import os
+import tools_common
 import main as main_mod
 
 
@@ -99,8 +101,48 @@ def test_merge_cancel_aborts(monkeypatch):
 import tools_common
 
 
+def test_acquire_lock_exclusive(tmp_path, monkeypatch):
+    monkeypatch.setattr(tools_common, "LOCK_FILE", str(tmp_path / "merge.lock"))
+    first = tools_common.acquire_lock()
+    assert first is not None
+    assert tools_common.acquire_lock() is None        # exclusive
+    tools_common.release_lock(first)
+    assert tools_common.acquire_lock() is not None    # reusable after release
+
+
+def test_release_lock_missing_is_safe(tmp_path, monkeypatch):
+    monkeypatch.setattr(tools_common, "LOCK_FILE", str(tmp_path / "nope.lock"))
+    tools_common.release_lock(str(tmp_path / "nope.lock"))  # no crash
+
+
+def test_wait_queue_stable_returns_after_settle(tmp_path, monkeypatch):
+    import time as _t
+    q = tmp_path / "q.txt"
+    monkeypatch.setattr(tools_common, "QUEUE_FILE", str(q))
+    q.write_text("/a.pdf\n/b.pdf\n")
+    # grow the file during the first poll window, then let it settle
+    orig_stat = os.stat
+
+    def fake_stat(p, *a, **k):
+        if str(p) == str(q) and not fake_stat.grown:
+            fake_stat.grown = True
+            q.write_text("/a.pdf\n/b.pdf\n/c.pdf\n")
+        return orig_stat(p, *a, **k)
+    fake_stat.grown = False
+    monkeypatch.setattr(tools_common.os, "stat", fake_stat)
+    items = tools_common.wait_queue_stable(timeout=10, settle=0.2, poll=0.1)
+    assert items == ["/a.pdf", "/b.pdf", "/c.pdf"]
+
+
+def test_wait_queue_stable_empty_queue(tmp_path, monkeypatch):
+    monkeypatch.setattr(tools_common, "QUEUE_FILE", str(tmp_path / "missing.txt"))
+    assert tools_common.wait_queue_stable(timeout=2, settle=0.1, poll=0.05) == []
+
+
 def test_queue_add_and_read_roundtrip(tmp_path, monkeypatch):
     monkeypatch.setattr(tools_common, "QUEUE_FILE", str(tmp_path / "q.txt"))
+    monkeypatch.setattr(tools_common, "LOCK_FILE", str(tmp_path / "lock"))
+    tools_common.queue_clear()
     tools_common.queue_add("a.pdf")
     tools_common.queue_add("b.pdf")
     tools_common.queue_add("a.pdf")  # duplicate ignored
@@ -130,6 +172,34 @@ def test_merge_queue_cancel_keeps_queue(monkeypatch):
     monkeypatch.setattr(main_mod.dialogs, "reorder_dialog", lambda p: None)
     calls = run(monkeypatch, ["merge-queue", "a.pdf"], queue=["a.pdf", "b.pdf"])
     assert "merge" not in calls and "_queue_cleared" not in calls
+
+
+def test_merge_selected_winner_merges_queue(monkeypatch):
+    monkeypatch.setattr(main_mod, "wait_queue_stable", lambda *a, **k: ["b.pdf", "a.pdf"])
+    monkeypatch.setattr(main_mod, "acquire_lock", lambda: "lock")
+    released = []
+    monkeypatch.setattr(main_mod, "release_lock", lambda p: released.append(p))
+    monkeypatch.setattr(main_mod.dialogs, "reorder_dialog", lambda p: ["a.pdf", "b.pdf"])
+    calls = run(monkeypatch, ["merge-selected", "a.pdf"], queue=["a.pdf", "b.pdf"])
+    assert calls["merge"][0] == (["a.pdf", "b.pdf"],)
+    assert calls["_queue"] == ["a.pdf"]      # this invocation queued its file
+    assert released == ["lock"]
+    assert calls["_queue_cleared"]           # queue consumed
+
+
+def test_merge_selected_sibling_exits_silently(monkeypatch):
+    monkeypatch.setattr(main_mod, "acquire_lock", lambda: None)  # another invocation owns it
+    calls = run(monkeypatch, ["merge-selected", "a.pdf"])
+    assert "merge" not in calls
+    assert calls["_queue"] == ["a.pdf"]      # still queues its file
+
+
+def test_merge_selected_too_few_shows_error(monkeypatch):
+    monkeypatch.setattr(main_mod, "acquire_lock", lambda: "lock")
+    monkeypatch.setattr(main_mod, "wait_queue_stable", lambda *a, **k: ["only.pdf"])
+    monkeypatch.setattr(main_mod, "release_lock", lambda p: None)
+    calls = run(monkeypatch, ["merge-selected", "only.pdf"])
+    assert "merge" not in calls and calls["error"]
 
 
 def test_unknown_action(monkeypatch):

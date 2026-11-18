@@ -6,7 +6,8 @@ import traceback
 
 import tools
 import dialogs
-from tools_common import queue_add, queue_read, queue_clear
+from tools_common import (queue_add, queue_read, queue_clear,
+                          acquire_lock, release_lock, wait_queue_stable)
 
 RESIZE_KB = {"resize-kb-50": 50, "resize-kb-100": 100,
              "resize-kb-150": 150, "resize-kb-300": 300}
@@ -46,6 +47,27 @@ def _val(title, label):
     except ValueError:
         show_error(f"'{v}' is not a number")
         return None
+
+
+def _merge_selected(src):
+    """'Merge Selected PDFs': Explorer fires this verb once per selected file,
+    so every invocation queues its file; the first one to win the lock watches
+    the queue until the siblings finish, then opens the merge dialog once."""
+    queue_add(src)
+    lock = acquire_lock()
+    if lock is None:
+        return  # a sibling invocation is already handling the dialog
+    try:
+        items = wait_queue_stable()
+    finally:
+        release_lock(lock)
+    if len(items) < 2:
+        show_error("Select at least two PDFs to merge")
+        return
+    ordered = dialogs.reorder_dialog(items)
+    if ordered is not None:
+        _progress("Merging PDFs...", tools.merge, ordered)
+        queue_clear()
 
 
 def dispatch(argv):
@@ -91,6 +113,8 @@ def dispatch(argv):
             kb = _val("Compress to Custom", "Target size in KB:")
             if kb is not None:
                 _progress("Compressing PDF...", tools.compress_to_kb, src, kb)
+        elif action == "merge-selected":
+            _merge_selected(src)
         elif action == "queue":
             queue_add(src)
         elif action == "merge-queue":

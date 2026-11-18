@@ -15,6 +15,21 @@ def _base_window(title, w, h):
     _center(win, w, h)
     win.attributes("-topmost", True)
     win.focus_force()  # launched from Explorer: otherwise it can open behind other windows
+    # visible close button (borderless windows have no title bar / X)
+    tk.Button(win, name="close", text="✕", width=2, command=win.destroy,
+              bd=0).place(relx=1.0, x=-24, y=2, anchor="ne")
+    # drag to move: only from the window body or labels, not from entries/buttons
+    pos = {"x": 0, "y": 0}
+
+    def start(e):
+        pos["x"], pos["y"] = e.x, e.y
+
+    def move(e):
+        if isinstance(e.widget, (tk.Label, tk.Tk)):
+            win.geometry(f"+{e.x_root - pos['x']}+{e.y_root - pos['y']}")
+
+    win.bind("<Button-1>", start)
+    win.bind("<B1-Motion>", move)
     return win
 
 
@@ -75,12 +90,22 @@ def progress_window(title):
     win = _base_window(title, 360, 70)
     lbl = tk.Label(win, text="Working...", anchor="w")
     lbl.pack(fill="x", padx=12, pady=16)
+    dead = []
 
     def update(text):
+        if dead:
+            return  # user closed the window; keep working silently
         lbl.config(text=text)
         win.update()
 
-    update.close = win.destroy
+    def close():
+        dead.append(1)
+        try:
+            win.destroy()
+        except tk.TclError:
+            pass
+
+    update.close = close
     return update
 
 
@@ -118,7 +143,8 @@ def reorder_dialog(paths):
         result.extend(box.get(0, "end"))
         win.destroy()
 
-    tk.Button(win, name="merge", text="Merge", width=12, command=ok).pack(pady=(0, 10))
+    tk.Button(win, name="merge", text="Merge", width=12, command=ok).pack(pady=(0, 4))
+    tk.Button(win, name="cancel", text="Cancel", width=12, command=win.destroy).pack(pady=(0, 10))
     _run_ok_esc(win, ok)
     win.mainloop()
     return list(result) if result else None

@@ -99,6 +99,15 @@ $lnk.Arguments    = "`"C:\Scripts\imagepdf\main.pyw`" merge"
 $lnk.IconLocation = "imageres.dll,-5372"
 $lnk.Save()
 
+# ---------- 6. Windows 11: show the full (classic) menu on first right-click ----------
+# Win11's compact menu hides classic verbs behind "Show more options"; a static
+# verb cannot be added to the new menu without an MSIX package. Restoring the
+# classic menu puts Image & PDF Tools on the first right-click.
+reg add "HKCU\Software\Classes\CLSID\{86ca1e77-a88c-4dc8-a587-e0cb6b5d8fb5}\InprocServer32" /f /ve | Out-Null
+if ($LASTEXITCODE -ne 0) { throw "failed to restore classic context menu" }
+$ans = Read-Host "Restart Explorer now to apply the classic menu? [Y/n]"
+if ($ans -notmatch '^n') { Stop-Process -Name explorer -Force }
+
 Write-Host ""
 Write-Host "Installed."
 Write-Host "  Right-click any image or PDF  -> 'Image & PDF Tools'"

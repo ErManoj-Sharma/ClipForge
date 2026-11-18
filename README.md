@@ -74,6 +74,14 @@ registry keys (the whole submenu) and the Send To shortcut. It deliberately
 manually if you want a fully clean machine. `uninstall_tools.reg` alone does
 just the registry part.
 
+### Windows 11 note
+Win11's compact menu hides classic verbs behind **Show more options**. Setup
+restores the **classic full menu as the default first menu** (one HKCU key,
+Explorer restart — setup asks before restarting). That puts Image & PDF Tools
+on the first right-click. Running `uninstall.bat` reverts Windows 11 to its
+default compact menu. (If a future Windows update re-enables the compact
+menu, re-run `setup.bat`.)
+
 ### Manual install/uninstall without PowerShell
 Double-click `tools_menu.reg` to add the menu; double-click
 `uninstall_tools.reg` to remove it. (Everything else still needs setup/uninstall.)

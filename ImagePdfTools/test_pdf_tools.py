@@ -71,7 +71,7 @@ def test_compress_picks_highest_quality_under_target(tmp_path):
         calls.append(dpi)
         return ["page"]  # fake pages
 
-    def encode(page, quality):
+    def encode(page, quality, gray):
         # monotonic: quality >= 48 -> too big (4000 B), below -> fits (900 B)
         return b"x" * (4000 if quality >= 48 else 900)
 
@@ -83,6 +83,27 @@ def test_compress_picks_highest_quality_under_target(tmp_path):
     assert calls == [200]  # first dpi fits; never renders lower dpi
 
 
+def test_compress_tries_grayscale_before_lower_dpi(tmp_path):
+    src = make_pdf(tmp_path, 10)
+    calls = []
+
+    def render(s, dpi):
+        calls.append(dpi)
+        return ["page"]
+
+    def encode(page, quality, gray):
+        # color never fits; grayscale fits at any quality
+        return b"x" * 4000 if not gray else b"x" * 900
+
+    def build(jpgs):
+        return b"".join(jpgs)
+
+    out = pdf_tools.compress_to_kb(src, 1, render=render, encode=encode,
+                                   encode_png=lambda p, c: b"x" * 9999, build=build)
+    assert len(open(out, "rb").read()) == 900
+    assert calls == [200]  # grayscale at 200 dpi beats stepping down dpi
+
+
 def test_compress_moves_to_lower_dpi_when_needed(tmp_path):
     src = make_pdf(tmp_path, 10)
     renders = []
@@ -91,20 +112,18 @@ def test_compress_moves_to_lower_dpi_when_needed(tmp_path):
         renders.append(dpi)
         return ["page"]
 
-    def encode(page, quality):
-        # 200 dpi can never fit; 150 dpi fits below quality 48
-        return b"x" * (8000 if dpi_of(render, renders[-1]) == 200 else
-                       (4000 if quality >= 48 else 900))
-
-    def dpi_of(render, last):
-        return last
+    def encode(page, quality, gray):
+        # 200 dpi never fits (color or gray); 150 dpi fits below quality 48
+        big = renders[-1] == 200 or quality >= 48
+        return b"x" * (8000 if big else 900)
 
     def build(jpgs):
         return b"".join(jpgs)
 
-    out = pdf_tools.compress_to_kb(src, 1, render=render, encode=encode, build=build)
+    out = pdf_tools.compress_to_kb(src, 1, render=render, encode=encode,
+                                   encode_png=lambda p, c: b"x" * 9999, build=build)
     assert len(open(out, "rb").read()) == 900
-    assert renders[:2] == [200, 150] and 110 not in renders  # stopped when 150 fit
+    assert renders == [200, 150]  # stopped as soon as 150 dpi color fit
 
 
 def test_compress_best_effort_when_nothing_fits(tmp_path):
@@ -115,14 +134,18 @@ def test_compress_best_effort_when_nothing_fits(tmp_path):
         renders.append(dpi)
         return ["page"]
 
-    def encode(page, quality):
-        # smaller dpi -> smaller output, but nothing under 1 KB
-        sizes = {200: 99999, 150: 5000, 110: 2500, 72: 1200}
+    def encode(page, quality, gray):
+        sizes = {200: 99999, 150: 5000, 110: 2500, 72: 1400, 50: 1300, 40: 1200}
+        return b"x" * sizes[renders[-1]]
+
+    def encode_png(page, colors):
+        sizes = {200: 60000, 150: 4000, 110: 3000, 72: 1600, 50: 1500, 40: 1400}
         return b"x" * sizes[renders[-1]]
 
     def build(jpgs):
         return b"".join(jpgs)
 
-    out = pdf_tools.compress_to_kb(src, 1, render=render, encode=encode, build=build)
+    out = pdf_tools.compress_to_kb(src, 1, render=render, encode=encode,
+                                   encode_png=encode_png, build=build)
     assert len(open(out, "rb").read()) == 1200  # smallest attempt wins
-    assert renders == [200, 150, 110, 72]
+    assert renders == [200, 150, 110, 72, 50, 40]

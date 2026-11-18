@@ -1,9 +1,9 @@
 # Image & PDF Tools — Documentation
-
+opencode -s ses_e15c6c992ffe18SdPUSAueCMr2
 A Windows right-click suite for image and PDF work. No app window: everything
 lives in the Explorer context menu (plus a tiny dialog only when a "custom"
-value is needed). Developed in this folder, deployed to `C:\Scripts\imagepdf`
-on Windows.
+value is needed). All deployable files sit in the **`ImagePdfTools/`** folder —
+copy that one folder to Windows; on the machine it deploys to `C:\Scripts\imagepdf`.
 
 ---
 
@@ -11,24 +11,24 @@ on Windows.
 
 **Right-click an image → "Image & PDF Tools"**
 
-| Menu item | What it does |
-|---|---|
-| Convert to PDF | Image → one-page PDF |
-| Convert to PNG | Any image → `.png` |
-| Convert to JPG | Any image → `.jpg` (quality 90) |
-| Resize to 50 / 100 / 150 / 300 KB | Shrink image until file size fits that ceiling |
-| Resize to Custom KB… | Same, with a size you type |
-| Resize to Pixel Size… | Fit image inside W × H you type (aspect kept, never upscales) |
+| Menu item                         | What it does                                                  |
+|-----------------------------------|---------------------------------------------------------------|
+| Convert to PDF                    | Image → one-page PDF                                          |
+| Convert to PNG                    | Any image → `.png`                                            |
+| Convert to JPG                    | Any image → `.jpg` (quality 90)                               |
+| Resize to 50 / 100 / 150 / 300 KB | Shrink image until file size fits that ceiling                |
+| Resize to Custom KB…              | Same, with a size you type                                    |
+| Resize to Pixel Size…             | Fit image inside W × H you type (aspect kept, never upscales) |
 
 **Right-click a PDF → "Image & PDF Tools"**
 
-| Menu item | What it does |
-|---|---|
-| Convert to Images (PNG) | Each page → `.png` at 200 dpi (multi-page: `file_1.png`, `file_2.png`…) |
-| Split Every Page | `file.pdf` → `file_1.pdf`, `file_2.pdf`, … (one page each) |
-| Split Every N Pages… | Type N → chunks of N pages (`file_1-3.pdf`, `file_4-6.pdf`…) |
-| Compress to 100 / 500 KB / 1 MB / 2 MB | Rebuild the PDF smaller than that ceiling |
-| Compress to Custom… | Type any KB target |
+| Menu item                              | What it does                                                            |
+|----------------------------------------|-------------------------------------------------------------------------|
+| Convert to Images (PNG)                | Each page → `.png` at 200 dpi (multi-page: `file_1.png`, `file_2.png`…) |
+| Split Every Page                       | `file.pdf` → `file_1.pdf`, `file_2.pdf`, … (one page each)              |
+| Split Every N Pages…                   | Type N → chunks of N pages (`file_1-3.pdf`, `file_4-6.pdf`…)            |
+| Compress to 100 / 500 KB / 1 MB / 2 MB | Rebuild the PDF smaller than that ceiling                               |
+| Compress to Custom…                    | Type any KB target                                                      |
 
 **Select 2+ PDFs → right-click → Send To → "Merge PDFs"**
 
@@ -107,19 +107,19 @@ main.py  dispatch(argv)  →  routes <action> to the matching function
   one go — ordinary context-menu verbs fire once per file (merge would run 4
   times instead of once).
 
-### 3.2 Files (in this folder; deployed copies live in `C:\Scripts\imagepdf`)
+### 3.2 Files (in the `ImagePdfTools/` folder; deployed copies live in `C:\Scripts\imagepdf`)
 
-| File | Responsibility |
-|---|---|
-| `tools_common.py` | `unique_path()` — non-colliding output names |
-| `image_tools.py` | image conversions + resizes |
-| `pdf_tools.py` | PDF merge / split / compress / to-images |
-| `dialogs.py` | the three tiny Tkinter dialogs |
-| `main.py` + `main.pyw` | action router + windowless entry point |
-| `tools.py` | namespace re-export (test seam) |
-| `tools_menu.reg`, `uninstall_tools.reg` | registry add / remove |
-| `setup.ps1`, `setup.bat` | one-click install (+ double-click wrapper) |
-| `uninstall.ps1` | one-step uninstall |
+| File                                    | Responsibility                               |
+|-----------------------------------------|----------------------------------------------|
+| `tools_common.py`                       | `unique_path()` — non-colliding output names |
+| `image_tools.py`                        | image conversions + resizes                  |
+| `pdf_tools.py`                          | PDF merge / split / compress / to-images     |
+| `dialogs.py`                            | the three tiny Tkinter dialogs               |
+| `main.py` + `main.pyw`                  | action router + windowless entry point       |
+| `tools.py`                              | namespace re-export (test seam)              |
+| `tools_menu.reg`, `uninstall_tools.reg` | registry add / remove                        |
+| `setup.ps1`, `setup.bat`                | one-click install (+ double-click wrapper)   |
+| `uninstall.ps1`                         | one-step uninstall                           |
 
 Pre-existing legacy scripts (`context_menu.reg`, `image_to_pdf.py`,
 `image_to_png.py`, `pdf_to_jpeg.py`, `pdf_to_png.py`, `pdf_to_png.reg`,

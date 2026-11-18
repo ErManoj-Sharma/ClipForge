@@ -19,6 +19,7 @@ copy that one folder to Windows; on the machine it deploys to `C:\Scripts\imagep
 | Resize to 50 / 100 / 150 / 300 KB | Shrink image until file size fits that ceiling                |
 | Resize to Custom KB…              | Same, with a size you type                                    |
 | Resize to Pixel Size…             | Fit image inside W × H you type (aspect kept, never upscales) |
+| Contact Developer                 | Opens the developer's links page in your browser              |
 
 **Right-click a PDF → "Image & PDF Tools"**
 
@@ -27,6 +28,7 @@ copy that one folder to Windows; on the machine it deploys to `C:\Scripts\imagep
 | Merge Selected PDFs                    | One-step merge of all selected PDFs (opens once, see below)             |
 | Convert to Images (PNG)                | Each page → `.png` at 200 dpi (multi-page: `file_1.png`, `file_2.png`…) |
 | Convert to Images (JPG)                | Each page → `.jpg` at 200 dpi, quality 90 — much smaller for photo pages |
+| Contact Developer                      | Opens the developer's links page in your browser                        |
 | Split Every Page                       | `file.pdf` → `file_1.pdf`, `file_2.pdf`, … (one page each)              |
 | Split Every N Pages…                   | Type N → chunks of N pages (`file_1-3.pdf`, `file_4-6.pdf`…)            |
 | Compress to 100 / 500 KB / 1 MB / 2 MB | Rebuild the PDF smaller than that ceiling                               |
@@ -135,6 +137,9 @@ main.py  dispatch(argv)  →  routes <action> to the matching function
   one patchable namespace (used by the tests).
 - Registry is under **HKCU** (per-user): no admin needed, survives for your
   account only.
+- The **Contact Developer** verb is the one entry that doesn't go through
+  Python — its command is `rundll32 url.dll,FileProtocolHandler <url>`, which
+  opens the links page in the default browser.
 - **Merging from multi-select** works despite Explorer firing the verb once
   per file: `Merge Selected PDFs` invocations append their file to a shared
   list in `%LOCALAPPDATA%\ImagePdfTools` and the first invocation to win an

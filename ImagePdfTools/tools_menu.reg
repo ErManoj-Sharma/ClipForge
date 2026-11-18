@@ -51,6 +51,11 @@ Windows Registry Editor Version 5.00
 [HKEY_CURRENT_USER\Software\Classes\SystemFileAssociations\image\shell\ImagePdfTools\shell\09_ResizePixels\command]
 @="__PYW__ \"C:\\Scripts\\imagepdf\\main.pyw\" resize-pixels \"%1\""
 
+[HKEY_CURRENT_USER\Software\Classes\SystemFileAssociations\image\shell\ImagePdfTools\shell\99_ContactDeveloper]
+@="Contact Developer"
+[HKEY_CURRENT_USER\Software\Classes\SystemFileAssociations\image\shell\ImagePdfTools\shell\99_ContactDeveloper\command]
+@="rundll32 url.dll,FileProtocolHandler https://manoj-sharma-portfolio.vercel.app/links"
+
 ; ---- Right-click on PDFs: Image & PDF Tools submenu ----
 [HKEY_CURRENT_USER\Software\Classes\SystemFileAssociations\.pdf\shell\ImagePdfTools]
 "MUIVerb"="Image & PDF Tools"
@@ -116,3 +121,8 @@ Windows Registry Editor Version 5.00
 @="Merge Queued PDFs"
 [HKEY_CURRENT_USER\Software\Classes\SystemFileAssociations\.pdf\shell\ImagePdfTools\shell\10_MergeQueue\command]
 @="__PYW__ \"C:\\Scripts\\imagepdf\\main.pyw\" merge-queue \"%1\""
+
+[HKEY_CURRENT_USER\Software\Classes\SystemFileAssociations\.pdf\shell\ImagePdfTools\shell\99_ContactDeveloper]
+@="Contact Developer"
+[HKEY_CURRENT_USER\Software\Classes\SystemFileAssociations\.pdf\shell\ImagePdfTools\shell\99_ContactDeveloper\command]
+@="rundll32 url.dll,FileProtocolHandler https://manoj-sharma-portfolio.vercel.app/links"

@@ -14,7 +14,7 @@ class FakeProgress:
         self.closed = True
 
 
-def run(monkeypatch, argv, **overrides):
+def run(monkeypatch, argv, queue=None, **overrides):
     """Call dispatch with patched deps; returns kwargs of the called tool fn."""
     calls = {}
 
@@ -33,6 +33,10 @@ def run(monkeypatch, argv, **overrides):
     monkeypatch.setattr(main_mod, "show_error", lambda *a: calls.setdefault("error", a))
     prog = FakeProgress()
     monkeypatch.setattr(main_mod.dialogs, "progress_window", lambda title: prog, raising=False)
+    # queue helpers: recorded in-memory instead of a real file
+    monkeypatch.setattr(main_mod, "queue_read", lambda: list(queue or []), raising=False)
+    monkeypatch.setattr(main_mod, "queue_add", lambda p: calls.setdefault("_queue", []).append(p), raising=False)
+    monkeypatch.setattr(main_mod, "queue_clear", lambda: calls.setdefault("_queue_cleared", True), raising=False)
     main_mod.dispatch(argv)
     calls["_progress"] = prog
     return calls
@@ -90,6 +94,42 @@ def test_merge_cancel_aborts(monkeypatch):
     monkeypatch.setattr(main_mod.dialogs, "reorder_dialog", lambda p: None)
     calls = run(monkeypatch, ["merge", "a.pdf", "b.pdf"])
     assert "merge" not in calls
+
+
+import tools_common
+
+
+def test_queue_add_and_read_roundtrip(tmp_path, monkeypatch):
+    monkeypatch.setattr(tools_common, "QUEUE_FILE", str(tmp_path / "q.txt"))
+    tools_common.queue_add("a.pdf")
+    tools_common.queue_add("b.pdf")
+    tools_common.queue_add("a.pdf")  # duplicate ignored
+    assert tools_common.queue_read() == ["a.pdf", "b.pdf"]
+    tools_common.queue_clear()
+    assert tools_common.queue_read() == []
+
+
+def test_queue_add_dispatch(monkeypatch):
+    calls = run(monkeypatch, ["queue", "a.pdf"])
+    assert calls["_queue"] == ["a.pdf"]
+
+
+def test_merge_queue_dispatch(monkeypatch):
+    monkeypatch.setattr(main_mod.dialogs, "reorder_dialog", lambda p: ["a.pdf", "b.pdf"])
+    calls = run(monkeypatch, ["merge-queue", "a.pdf"], queue=["b.pdf", "a.pdf"])
+    assert calls["merge"][0] == (["a.pdf", "b.pdf"],)
+    assert calls["_queue_cleared"]
+
+
+def test_merge_queue_too_few(monkeypatch):
+    calls = run(monkeypatch, ["merge-queue", "a.pdf"], queue=["a.pdf"])
+    assert "merge" not in calls and calls["error"]
+
+
+def test_merge_queue_cancel_keeps_queue(monkeypatch):
+    monkeypatch.setattr(main_mod.dialogs, "reorder_dialog", lambda p: None)
+    calls = run(monkeypatch, ["merge-queue", "a.pdf"], queue=["a.pdf", "b.pdf"])
+    assert "merge" not in calls and "_queue_cleared" not in calls
 
 
 def test_unknown_action(monkeypatch):

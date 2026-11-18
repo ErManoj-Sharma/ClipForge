@@ -6,6 +6,7 @@ import traceback
 
 import tools
 import dialogs
+from tools_common import queue_add, queue_read, queue_clear
 
 RESIZE_KB = {"resize-kb-50": 50, "resize-kb-100": 100,
              "resize-kb-150": 150, "resize-kb-300": 300}
@@ -90,6 +91,19 @@ def dispatch(argv):
             kb = _val("Compress to Custom", "Target size in KB:")
             if kb is not None:
                 _progress("Compressing PDF...", tools.compress_to_kb, src, kb)
+        elif action == "queue":
+            queue_add(src)
+        elif action == "merge-queue":
+            items = queue_read()
+            if len(items) < 2:
+                show_error("Queue at least two PDFs first:\n"
+                           "select them, right-click -> 'Queue for Merge',\n"
+                           "then use 'Merge Queued PDFs'.")
+                return
+            ordered = dialogs.reorder_dialog(items)
+            if ordered is not None:
+                _progress("Merging PDFs...", tools.merge, ordered)
+                queue_clear()
         elif action == "merge":
             if len(files) < 2:
                 show_error("Select at least two PDFs to merge")

@@ -29,12 +29,20 @@ copy that one folder to Windows; on the machine it deploys to `C:\Scripts\imagep
 | Split Every N Pages…                   | Type N → chunks of N pages (`file_1-3.pdf`, `file_4-6.pdf`…)            |
 | Compress to 100 / 500 KB / 1 MB / 2 MB | Rebuild the PDF smaller than that ceiling                               |
 | Compress to Custom…                    | Type any KB target                                                      |
+| Queue for Merge                        | Add to merge queue — on multi-select each file queues itself            |
+| Merge Queued PDFs                      | Reorder + merge the queue, then clear it                                |
 
-**Select 2+ PDFs → right-click → Send To → "Merge PDFs"**
+**Merging PDFs — two ways**
 
-A small window lists the selected files — select one, use **Up / Down** to set
-the order (top = first page), then **Merge**. Result: `merged.pdf` next to the
-first file. **Cancel / Esc** merges nothing.
+1. **Right-click menu (multi-select):** select the PDFs → right-click →
+   **Queue for Merge** (each selected file is queued) → right-click again →
+   **Merge Queued PDFs** → reorder dialog (Up/Down sets page order) → **Merge**.
+   Result: `merged.pdf` next to the first queued file; the queue clears on
+   success, and stays if you Cancel so you can retry. Queuing the same file
+   twice is ignored.
+2. **Send To (one step):** select the PDFs → right-click → **Send To →
+   Merge PDFs** — Explorer passes all selected files at once, straight to the
+   reorder dialog.
 
 ### Rules that apply everywhere
 - Output is always saved **next to the input file**.

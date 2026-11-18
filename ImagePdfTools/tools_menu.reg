@@ -96,3 +96,13 @@ Windows Registry Editor Version 5.00
 @="Compress to Custom..."
 [HKEY_CURRENT_USER\Software\Classes\SystemFileAssociations\.pdf\shell\ImagePdfTools\shell\08_CompressCustom\command]
 @="__PYW__ \"C:\\Scripts\\imagepdf\\main.pyw\" compress-custom \"%1\""
+
+[HKEY_CURRENT_USER\Software\Classes\SystemFileAssociations\.pdf\shell\ImagePdfTools\shell\09_QueueForMerge]
+@="Queue for Merge"
+[HKEY_CURRENT_USER\Software\Classes\SystemFileAssociations\.pdf\shell\ImagePdfTools\shell\09_QueueForMerge\command]
+@="__PYW__ \"C:\\Scripts\\imagepdf\\main.pyw\" queue \"%1\""
+
+[HKEY_CURRENT_USER\Software\Classes\SystemFileAssociations\.pdf\shell\ImagePdfTools\shell\10_MergeQueue]
+@="Merge Queued PDFs"
+[HKEY_CURRENT_USER\Software\Classes\SystemFileAssociations\.pdf\shell\ImagePdfTools\shell\10_MergeQueue\command]
+@="__PYW__ \"C:\\Scripts\\imagepdf\\main.pyw\" merge-queue \"%1\""

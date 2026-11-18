@@ -127,6 +127,15 @@ def reorder_dialog(paths):
             box.selection_set(j)
             box.activate(j)
 
+    def remove():
+        sel = box.curselection()
+        if not sel:
+            return
+        i = sel[0]
+        box.delete(i)
+        # keep a selection so Up/Down/Merge keys stay usable
+        box.selection_set(max(0, min(i, box.size() - 1)))
+
     win = _base_window("Merge PDFs - set order (top = first)", 420, 320)
     box = tk.Listbox(win, selectmode="browse", name="list")
     for p in paths:
@@ -137,6 +146,7 @@ def reorder_dialog(paths):
     btns = tk.Frame(win)
     tk.Button(btns, name="up", text="Up", width=8, command=lambda: move(-1)).pack(side="left", padx=4)
     tk.Button(btns, name="down", text="Down", width=8, command=lambda: move(1)).pack(side="left", padx=4)
+    tk.Button(btns, name="remove", text="Remove", width=8, command=remove).pack(side="left", padx=4)
     btns.pack()
 
     def ok():

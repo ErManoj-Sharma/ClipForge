@@ -78,8 +78,18 @@ Copy-Item "$src\main.py", "$src\main.pyw", "$src\tools.py", `
           "$src\tools_common.py", "$src\dialogs.py" -Destination $dest -Force
 
 # ---------- 5. Registry + Send To shortcut ----------
-reg import "$src\tools_menu.reg"
+# The .reg is a template: __PYW__ is replaced with the absolute launcher path.
+# Context-menu commands must launch an executable - a bare .pyw document is
+# never executed, and bare "pyw.exe" breaks when the launcher is not on PATH.
+$pywEsc = $pyw.Replace('\', '\\')
+$menu = Get-Content "$src\tools_menu.reg" -Raw
+$menu = $menu.Replace('__PYW__', $pywEsc)
+$gen = "$env:TEMP\tools_menu_generated.reg"
+Set-Content -Path $gen -Value $menu -Encoding Unicode
+reg import "$gen"
 if ($LASTEXITCODE -ne 0) { throw "registry import failed" }
+
+if (-not (Test-Path "$dest\main.pyw")) { throw "scripts were not copied to $dest" }
 
 $sendTo = [Environment]::GetFolderPath("ApplicationData") + "\Microsoft\Windows\SendTo"
 $ws  = New-Object -ComObject WScript.Shell

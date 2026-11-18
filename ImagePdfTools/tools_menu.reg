@@ -9,47 +9,47 @@ Windows Registry Editor Version 5.00
 [HKEY_CURRENT_USER\Software\Classes\SystemFileAssociations\image\shell\ImagePdfTools\shell\01_ConvertToPDF]
 @="Convert to PDF"
 [HKEY_CURRENT_USER\Software\Classes\SystemFileAssociations\image\shell\ImagePdfTools\shell\01_ConvertToPDF\command]
-@="\"C:\\Scripts\\imagepdf\\main.pyw\" to-pdf \"%1\""
+@="__PYW__ \"C:\\Scripts\\imagepdf\\main.pyw\" to-pdf \"%1\""
 
 [HKEY_CURRENT_USER\Software\Classes\SystemFileAssociations\image\shell\ImagePdfTools\shell\02_ConvertToPNG]
 @="Convert to PNG"
 [HKEY_CURRENT_USER\Software\Classes\SystemFileAssociations\image\shell\ImagePdfTools\shell\02_ConvertToPNG\command]
-@="\"C:\\Scripts\\imagepdf\\main.pyw\" to-png \"%1\""
+@="__PYW__ \"C:\\Scripts\\imagepdf\\main.pyw\" to-png \"%1\""
 
 [HKEY_CURRENT_USER\Software\Classes\SystemFileAssociations\image\shell\ImagePdfTools\shell\03_ConvertToJPG]
 @="Convert to JPG"
 [HKEY_CURRENT_USER\Software\Classes\SystemFileAssociations\image\shell\ImagePdfTools\shell\03_ConvertToJPG\command]
-@="\"C:\\Scripts\\imagepdf\\main.pyw\" to-jpg \"%1\""
+@="__PYW__ \"C:\\Scripts\\imagepdf\\main.pyw\" to-jpg \"%1\""
 
 [HKEY_CURRENT_USER\Software\Classes\SystemFileAssociations\image\shell\ImagePdfTools\shell\04_Resize50KB]
 @="Resize to 50 KB"
 [HKEY_CURRENT_USER\Software\Classes\SystemFileAssociations\image\shell\ImagePdfTools\shell\04_Resize50KB\command]
-@="\"C:\\Scripts\\imagepdf\\main.pyw\" resize-kb-50 \"%1\""
+@="__PYW__ \"C:\\Scripts\\imagepdf\\main.pyw\" resize-kb-50 \"%1\""
 
 [HKEY_CURRENT_USER\Software\Classes\SystemFileAssociations\image\shell\ImagePdfTools\shell\05_Resize100KB]
 @="Resize to 100 KB"
 [HKEY_CURRENT_USER\Software\Classes\SystemFileAssociations\image\shell\ImagePdfTools\shell\05_Resize100KB\command]
-@="\"C:\\Scripts\\imagepdf\\main.pyw\" resize-kb-100 \"%1\""
+@="__PYW__ \"C:\\Scripts\\imagepdf\\main.pyw\" resize-kb-100 \"%1\""
 
 [HKEY_CURRENT_USER\Software\Classes\SystemFileAssociations\image\shell\ImagePdfTools\shell\06_Resize150KB]
 @="Resize to 150 KB"
 [HKEY_CURRENT_USER\Software\Classes\SystemFileAssociations\image\shell\ImagePdfTools\shell\06_Resize150KB\command]
-@="\"C:\\Scripts\\imagepdf\\main.pyw\" resize-kb-150 \"%1\""
+@="__PYW__ \"C:\\Scripts\\imagepdf\\main.pyw\" resize-kb-150 \"%1\""
 
 [HKEY_CURRENT_USER\Software\Classes\SystemFileAssociations\image\shell\ImagePdfTools\shell\07_Resize300KB]
 @="Resize to 300 KB"
 [HKEY_CURRENT_USER\Software\Classes\SystemFileAssociations\image\shell\ImagePdfTools\shell\07_Resize300KB\command]
-@="\"C:\\Scripts\\imagepdf\\main.pyw\" resize-kb-300 \"%1\""
+@="__PYW__ \"C:\\Scripts\\imagepdf\\main.pyw\" resize-kb-300 \"%1\""
 
 [HKEY_CURRENT_USER\Software\Classes\SystemFileAssociations\image\shell\ImagePdfTools\shell\08_ResizeCustomKB]
 @="Resize to Custom KB..."
 [HKEY_CURRENT_USER\Software\Classes\SystemFileAssociations\image\shell\ImagePdfTools\shell\08_ResizeCustomKB\command]
-@="\"C:\\Scripts\\imagepdf\\main.pyw\" resize-kb-custom \"%1\""
+@="__PYW__ \"C:\\Scripts\\imagepdf\\main.pyw\" resize-kb-custom \"%1\""
 
 [HKEY_CURRENT_USER\Software\Classes\SystemFileAssociations\image\shell\ImagePdfTools\shell\09_ResizePixels]
 @="Resize to Pixel Size..."
 [HKEY_CURRENT_USER\Software\Classes\SystemFileAssociations\image\shell\ImagePdfTools\shell\09_ResizePixels\command]
-@="\"C:\\Scripts\\imagepdf\\main.pyw\" resize-pixels \"%1\""
+@="__PYW__ \"C:\\Scripts\\imagepdf\\main.pyw\" resize-pixels \"%1\""
 
 ; ---- Right-click on PDFs: Image & PDF Tools submenu ----
 [HKEY_CURRENT_USER\Software\Classes\SystemFileAssociations\.pdf\shell\ImagePdfTools]
@@ -60,39 +60,39 @@ Windows Registry Editor Version 5.00
 [HKEY_CURRENT_USER\Software\Classes\SystemFileAssociations\.pdf\shell\ImagePdfTools\shell\01_ConvertToImages]
 @="Convert to Images (PNG)"
 [HKEY_CURRENT_USER\Software\Classes\SystemFileAssociations\.pdf\shell\ImagePdfTools\shell\01_ConvertToImages\command]
-@="\"C:\\Scripts\\imagepdf\\main.pyw\" pdf-to-images \"%1\""
+@="__PYW__ \"C:\\Scripts\\imagepdf\\main.pyw\" pdf-to-images \"%1\""
 
 [HKEY_CURRENT_USER\Software\Classes\SystemFileAssociations\.pdf\shell\ImagePdfTools\shell\02_SplitEveryPage]
 @="Split Every Page"
 [HKEY_CURRENT_USER\Software\Classes\SystemFileAssociations\.pdf\shell\ImagePdfTools\shell\02_SplitEveryPage\command]
-@="\"C:\\Scripts\\imagepdf\\main.pyw\" split-page \"%1\""
+@="__PYW__ \"C:\\Scripts\\imagepdf\\main.pyw\" split-page \"%1\""
 
 [HKEY_CURRENT_USER\Software\Classes\SystemFileAssociations\.pdf\shell\ImagePdfTools\shell\03_SplitEveryN]
 @="Split Every N Pages..."
 [HKEY_CURRENT_USER\Software\Classes\SystemFileAssociations\.pdf\shell\ImagePdfTools\shell\03_SplitEveryN\command]
-@="\"C:\\Scripts\\imagepdf\\main.pyw\" split-n \"%1\""
+@="__PYW__ \"C:\\Scripts\\imagepdf\\main.pyw\" split-n \"%1\""
 
 [HKEY_CURRENT_USER\Software\Classes\SystemFileAssociations\.pdf\shell\ImagePdfTools\shell\04_Compress100KB]
 @="Compress to 100 KB"
 [HKEY_CURRENT_USER\Software\Classes\SystemFileAssociations\.pdf\shell\ImagePdfTools\shell\04_Compress100KB\command]
-@="\"C:\\Scripts\\imagepdf\\main.pyw\" compress-100 \"%1\""
+@="__PYW__ \"C:\\Scripts\\imagepdf\\main.pyw\" compress-100 \"%1\""
 
 [HKEY_CURRENT_USER\Software\Classes\SystemFileAssociations\.pdf\shell\ImagePdfTools\shell\05_Compress500KB]
 @="Compress to 500 KB"
 [HKEY_CURRENT_USER\Software\Classes\SystemFileAssociations\.pdf\shell\ImagePdfTools\shell\05_Compress500KB\command]
-@="\"C:\\Scripts\\imagepdf\\main.pyw\" compress-500 \"%1\""
+@="__PYW__ \"C:\\Scripts\\imagepdf\\main.pyw\" compress-500 \"%1\""
 
 [HKEY_CURRENT_USER\Software\Classes\SystemFileAssociations\.pdf\shell\ImagePdfTools\shell\06_Compress1MB]
 @="Compress to 1 MB"
 [HKEY_CURRENT_USER\Software\Classes\SystemFileAssociations\.pdf\shell\ImagePdfTools\shell\06_Compress1MB\command]
-@="\"C:\\Scripts\\imagepdf\\main.pyw\" compress-1024 \"%1\""
+@="__PYW__ \"C:\\Scripts\\imagepdf\\main.pyw\" compress-1024 \"%1\""
 
 [HKEY_CURRENT_USER\Software\Classes\SystemFileAssociations\.pdf\shell\ImagePdfTools\shell\07_Compress2MB]
 @="Compress to 2 MB"
 [HKEY_CURRENT_USER\Software\Classes\SystemFileAssociations\.pdf\shell\ImagePdfTools\shell\07_Compress2MB\command]
-@="\"C:\\Scripts\\imagepdf\\main.pyw\" compress-2048 \"%1\""
+@="__PYW__ \"C:\\Scripts\\imagepdf\\main.pyw\" compress-2048 \"%1\""
 
 [HKEY_CURRENT_USER\Software\Classes\SystemFileAssociations\.pdf\shell\ImagePdfTools\shell\08_CompressCustom]
 @="Compress to Custom..."
 [HKEY_CURRENT_USER\Software\Classes\SystemFileAssociations\.pdf\shell\ImagePdfTools\shell\08_CompressCustom\command]
-@="\"C:\\Scripts\\imagepdf\\main.pyw\" compress-custom \"%1\""
+@="__PYW__ \"C:\\Scripts\\imagepdf\\main.pyw\" compress-custom \"%1\""

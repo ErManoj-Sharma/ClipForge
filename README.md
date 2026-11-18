@@ -24,6 +24,7 @@ copy that one folder to Windows; on the machine it deploys to `C:\Scripts\imagep
 
 | Menu item                              | What it does                                                            |
 |----------------------------------------|-------------------------------------------------------------------------|
+| Merge Selected PDFs                    | One-step merge of all selected PDFs (opens once, see below)             |
 | Convert to Images (PNG)                | Each page → `.png` at 200 dpi (multi-page: `file_1.png`, `file_2.png`…) |
 | Split Every Page                       | `file.pdf` → `file_1.pdf`, `file_2.pdf`, … (one page each)              |
 | Split Every N Pages…                   | Type N → chunks of N pages (`file_1-3.pdf`, `file_4-6.pdf`…)            |
@@ -133,24 +134,30 @@ main.py  dispatch(argv)  →  routes <action> to the matching function
   one patchable namespace (used by the tests).
 - Registry is under **HKCU** (per-user): no admin needed, survives for your
   account only.
-- The **Merge PDFs** entry is in the **Send To** menu instead, because Send To
-  is the only Explorer path that passes *all selected files* to the command in
-  one go — ordinary context-menu verbs fire once per file (merge would run 4
-  times instead of once).
+- **Merging from multi-select** works despite Explorer firing the verb once
+  per file: `Merge Selected PDFs` invocations append their file to a shared
+  list in `%LOCALAPPDATA%\ImagePdfTools` and the first invocation to win an
+  exclusive lock file collects the rest (`wait_queue_stable`: the list must
+  stop changing for 1.2s, max 8s), then opens the dialog once. The lock is
+  held until the session ends so no straggler can open a second dialog; the
+  list is wiped at session end either way. Sibling writes are append-only
+  (`O_APPEND`) so concurrent invocations can't erase each other's file, and
+  a lock left by a crashed process is stolen after 15 minutes.
 
 ### 3.2 Files (in the `ImagePdfTools/` folder; deployed copies live in `C:\Scripts\imagepdf`)
 
 | File                                    | Responsibility                               |
 |-----------------------------------------|----------------------------------------------|
-| `tools_common.py`                       | `unique_path()` — non-colliding output names |
+| `tools_common.py`                       | `unique_path()`, merge queue + lock helpers  |
 | `image_tools.py`                        | image conversions + resizes                  |
 | `pdf_tools.py`                          | PDF merge / split / compress / to-images     |
-| `dialogs.py`                            | the three tiny Tkinter dialogs               |
+| `dialogs.py`                            | the tiny Tkinter dialogs (✕, drag, Cancel)   |
 | `main.py` + `main.pyw`                  | action router + windowless entry point       |
 | `tools.py`                              | namespace re-export (test seam)              |
 | `tools_menu.reg`, `uninstall_tools.reg` | registry add / remove                        |
 | `setup.ps1`, `setup.bat`                | one-click install (+ double-click wrapper)   |
-| `uninstall.ps1`                         | one-step uninstall                           |
+| `uninstall.ps1`, `uninstall.bat`        | one-step uninstall (+ double-click wrapper)  |
+| `restore_default_menu.bat`              | revert Win11 to the compact default menu     |
 
 Pre-existing legacy scripts (`context_menu.reg`, `image_to_pdf.py`,
 `image_to_png.py`, `pdf_to_jpeg.py`, `pdf_to_png.py`, `pdf_to_png.reg`,
@@ -183,7 +190,8 @@ page range. Every-page: `file_1.pdf`…; every-N: ranges `1-3`, `4-6`, `7-7`
 (last chunk may be smaller).
 
 **Merge** — `pypdf.PdfWriter.append()` for each file in the order you set in
-the reorder dialog → `merged.pdf`.
+the reorder dialog → `merged.pdf`. The multi-select "Merge Selected PDFs"
+mechanics (per-file firing, queue + lock) are described in section 3.1.
 
 **Compress to KB** — there is no library that compresses arbitrary PDFs to an
 exact size, so the pages are **rasterized** and the PDF is rebuilt from page
@@ -206,9 +214,13 @@ Borderless always-on-top Tk windows, centered on screen:
   which aborts the action — no file is written).
 - **ask_pixel_size** — parses `1280 x 720` (also `*`); invalid input stays in
   the window with a hint instead of closing.
-- **reorder_dialog** — listbox + Up/Down + Merge/Cancel for the merge order.
-  Selection is cleared before re-set because Tk's `selection_set` proved
-  additive in this build.
+- **reorder_dialog** — listbox + Up/Down/**Remove** + Merge/Cancel for the
+  merge order. Selection is re-set after moves/removals (Tk's `selection_set`
+  proved additive in this build); removing everything makes Merge act as
+  Cancel. Drag-to-move and a ✕ close button come from the shared base window.
+- **progress_window** — a "Working…" label refreshed from the long-running
+  task (the repaint is also what keeps the window alive during synchronous
+  work); closing it early is safe — the task keeps running silently.
 
 ### 3.5 Error handling
 
@@ -221,20 +233,27 @@ write files.
 
 ## 4. Testing
 
-29 automated tests (`python3 -m pytest`, all passing) cover the pure logic:
+50 automated tests (`python3 -m pytest`, all passing) cover the pure logic:
 collision naming, resize binary search + best-effort floor, split chunking,
-compress early-return + ladder stop, merge order, and the router's action
+compress early-return + full search ladder, merge order, the router's action
 table (dialog cancellation aborting, unknown actions, merge needing ≥ 2
-files). The GUI dialogs were verified interactively; Windows-side behavior
-(registry, Send To, installer) is read-verified only — the first real run on
-Windows is the final test.
+files), and the merge-selected concurrency model (queue roundtrip, lock
+exclusivity + stale-lock stealing, queue stability/min-len waiting, and a
+5-thread race proving the dialog opens exactly once with all files). The GUI
+dialogs were verified interactively (✕, drag, Cancel, Remove); Windows-side
+behavior (registry, Send To, installer) is read-verified only — the first
+real run on Windows is the final test. Multi-process burst behavior was
+additionally verified with real concurrent-process simulations on Linux.
 
 ## 5. Known limits
 
 - PDF compress is lossy (rasterized pages).
 - Size targets are ceilings, not exact values.
-- Single-file menu verbs act on one file; Explorer's per-file firing is why
-  merge uses Send To.
+- Merge-selected: if Explorer launches the per-file processes more than ~1.2s
+  apart (e.g. extreme anti-virus delays), the burst can split into two
+  dialogs; a sibling arriving while the dialog is already open is silently
+  dropped from that merge. Selecting a single PDF waits up to 8s (collecting)
+  before erroring.
 - Merge accepts whatever files you send (it doesn't filter by extension);
   a non-PDF will surface an error box.
 - Poppler path is hardcoded; moving `C:\poppler` requires updating
@@ -242,3 +261,8 @@ Windows is the final test.
 - The cascaded submenu uses the common-but-semi-documented `SubCommands=""`
   pattern; if the submenu appears empty on your Windows build, the parent
   key needs `ExtendedSubCommandsKey` instead (one-line registry change).
+
+## 6. Future improvements
+
+See **`features.md`** for the suggested-features backlog (prioritized, with
+rationale and rough effort per item).

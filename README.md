@@ -150,6 +150,48 @@ Double-click `tools_menu.reg` to add the menu; double-click
 
 ---
 
+## Release process & updates
+
+**After code changes — how to ship a new version, and how "Check for Update"
+finds it.**
+
+### 1. Bump the version (files that change)
+| File | What to change |
+|---|---|
+| `ImagePdfTools/main.py` | `CURRENT_VERSION = "X.Y.Z"` |
+| `ImagePdfTools/setup.ps1` | `$version = "X.Y.Z"` |
+| `dist/version.json` | `{"version": "X.Y.Z", "installer": "https://github.com/ErManoj-Sharma/ClipForge/releases/download/vX.Y.Z/RightKitSetup.cmd"}` — new version + release URL |
+
+### 2. Build the single-file installer (`dist/RightKitSetup.cmd`)
+```
+python3 ImagePdfTools/build_installer.py
+```
+Regenerates `dist/RightKitSetup.cmd` (a self-extracting `.cmd` embedding a
+base64 ZIP of the 15 packaged files). Re-run after changing any packaged file.
+
+### 3. Commit + push
+```
+git add -A && git commit -m "release: vX.Y.Z — <summary>" && git push
+```
+`Check for Update` fetches
+`https://raw.githubusercontent.com/ErManoj-Sharma/ClipForge/master/dist/version.json`
+— the repo's default branch — so push before releasing. (raw can briefly serve
+the old file right after a push; re-check later if it lags.)
+
+### 4. Make the GitHub Release `vX.Y.Z`
+- GitHub → Releases → New release
+- Tag: **`vX.Y.Z`** (must match the manifest `installer` URL)
+- Upload `dist/RightKitSetup.cmd` as the asset named exactly **`RightKitSetup.cmd`**
+
+### 5. Verify the update path
+- `curl -s https://raw.githubusercontent.com/ErManoj-Sharma/ClipForge/master/dist/version.json` → prints the new version.
+- On a machine at the old version: right-click PDF → **Check for Update** →
+  "RightKit X.Y.Z is available. Download and update now?" → downloads the
+  installer to `%TEMP%` and launches it (re-runs `setup.ps1` → reinstalls).
+- After updating: **Check for Update** → "RightKit is up to date (vX.Y.Z)."
+
+---
+
 ## 3. How it works
 
 ### 3.1 The chain: right-click → registry → pyw → router

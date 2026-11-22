@@ -17,7 +17,7 @@ if (-not ([Security.Principal.WindowsPrincipal]$id).IsInRole([Security.Principal
 Write-Host "=== RightKit Image and Pdf Tools installer ==="
 
 $dest    = "C:\Scripts\imagepdf"
-$version = "1.0.0"
+$version = "1.0.1"
 $src     = Split-Path $MyInvocation.MyCommand.Path -Parent
 $poppler = "C:\poppler\poppler-24.08.0\Library\bin"
 

@@ -17,7 +17,7 @@ RESIZE_KB = {"resize-kb-50": 50, "resize-kb-100": 100,
 COMPRESS_KB = {"compress-100": 100, "compress-500": 500,
                "compress-1024": 1024, "compress-2048": 2048}
 VERSION_FILE = r"C:\Scripts\imagepdf\version.txt"
-CURRENT_VERSION = "1.0.0"
+CURRENT_VERSION = "1.0.1"
 UPDATE_MANIFEST_URL = ("https://raw.githubusercontent.com/"
                        "ErManoj-Sharma/ClipForge/master/dist/version.json")
 
@@ -112,11 +112,20 @@ def _version_tuple(v):
 
 
 def _installed_version():
+    # utf-8-sig: setup.ps1 writes version.txt via `Set-Content -Encoding UTF8`,
+    # which prefixes a BOM; plain "utf-8" leaves it, and it parses as version 0
+    # (update dialog reappears forever).
     try:
-        with open(VERSION_FILE, encoding="utf-8") as f:
-            return f.read().strip()
+        with open(VERSION_FILE, encoding="utf-8-sig") as f:
+            v = f.read().strip()
     except OSError:
-        return CURRENT_VERSION
+        v = ""
+    return v if v else CURRENT_VERSION
+
+
+def _set_installed_version(v):
+    with open(VERSION_FILE, "w", encoding="utf-8") as f:
+        f.write(v + "\n")
 
 
 def _fetch_manifest():
@@ -171,6 +180,12 @@ def check_update():
     except Exception as e:
         show_error("Download failed:\n" + str(e))
         return
+    # Record the new version now so the next 'Check for Update' is up to date,
+    # even if the installer hasn't finished running yet.
+    try:
+        _set_installed_version(remote)
+    except OSError:
+        pass
     _open_installer(tmp)
     show_info(f"RightKit {remote}: update initiated.\n"
               f"Run the installer when it opens (copy of: {tmp}).")

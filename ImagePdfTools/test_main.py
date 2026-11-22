@@ -442,6 +442,38 @@ def test_installed_version_fallback(monkeypatch):
     assert main_mod._installed_version() == main_mod.CURRENT_VERSION
 
 
+def test_installed_version_strips_bom(monkeypatch, tmp_path):
+    # setup.ps1 writes version.txt via `Set-Content -Encoding UTF8` (BOM)
+    vf = tmp_path / "version.txt"
+    vf.write_bytes(b"\xef\xbb\xbf1.0.0\r\n")
+    monkeypatch.setattr(main_mod, "VERSION_FILE", str(vf))
+    assert main_mod._installed_version() == "1.0.0"
+
+
+def test_installed_version_empty_file_falls_back(monkeypatch, tmp_path):
+    vf = tmp_path / "version.txt"
+    vf.write_text("")
+    monkeypatch.setattr(main_mod, "VERSION_FILE", str(vf))
+    assert main_mod._installed_version() == main_mod.CURRENT_VERSION
+
+
+def test_check_update_writes_version_on_confirm(monkeypatch, tmp_path):
+    vf = tmp_path / "version.txt"
+    vf.write_text("1.0.0")
+    monkeypatch.setattr(main_mod, "VERSION_FILE", str(vf))
+    monkeypatch.setattr(main_mod, "_installed_version", lambda: "1.0.0")
+    monkeypatch.setattr(main_mod, "_fetch_manifest",
+                        lambda: {"version": "1.0.1", "installer": "https://x/new.cmd"})
+    dls, opens = [], []
+    monkeypatch.setattr(main_mod, "_ask_yes", lambda *a, **k: True)
+    monkeypatch.setattr(main_mod, "_download", lambda url, path: dls.append(url))
+    monkeypatch.setattr(main_mod, "_open_installer", lambda p: opens.append(p))
+    monkeypatch.setattr(main_mod, "show_info", lambda m: None)
+    main_mod.check_update()
+    assert dls == ["https://x/new.cmd"] and opens
+    assert vf.read_text().strip() == "1.0.1"
+
+
 def test_check_update_up_to_date(monkeypatch):
     monkeypatch.setattr(main_mod, "_installed_version", lambda: "1.0.0")
     monkeypatch.setattr(main_mod, "_fetch_manifest", lambda: {"version": "1.0.0"})
@@ -455,7 +487,10 @@ def test_check_update_up_to_date(monkeypatch):
     assert dls == []
 
 
-def test_check_update_newer_auto_updates(monkeypatch):
+def test_check_update_newer_auto_updates(monkeypatch, tmp_path):
+    vf = tmp_path / "version.txt"
+    vf.write_text("1.0.0")
+    monkeypatch.setattr(main_mod, "VERSION_FILE", str(vf))
     monkeypatch.setattr(main_mod, "_installed_version", lambda: "1.0.0")
     monkeypatch.setattr(main_mod, "_fetch_manifest",
                         lambda: {"version": "1.0.1",
@@ -470,6 +505,7 @@ def test_check_update_newer_auto_updates(monkeypatch):
     main_mod.check_update()
     assert dls and dls[0][0] == "https://x/new.cmd"
     assert opens
+    assert vf.read_text().strip() == "1.0.1"  # next check sees the new version
 
 
 def test_check_update_newer_declined(monkeypatch):
@@ -533,7 +569,7 @@ def test_menu_has_check_for_update():
 
 def test_setup_writes_version_file():
     setup = open(_here("setup.ps1"), encoding="utf-8").read()
-    assert '$version = "1.0.0"' in setup
+    assert '$version = "1.0.1"' in setup
     assert 'Set-Content -LiteralPath "$dest\\version.txt"' in setup
     main_src = open(_here("main.py"), encoding="utf-8").read()
-    assert 'CURRENT_VERSION = "1.0.0"' in main_src
+    assert 'CURRENT_VERSION = "1.0.1"' in main_src

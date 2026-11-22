@@ -17,7 +17,7 @@ RESIZE_KB = {"resize-kb-50": 50, "resize-kb-100": 100,
 COMPRESS_KB = {"compress-100": 100, "compress-500": 500,
                "compress-1024": 1024, "compress-2048": 2048}
 VERSION_FILE = r"C:\Scripts\imagepdf\version.txt"
-CURRENT_VERSION = "1.0.1"
+CURRENT_VERSION = "1.0.2"
 UPDATE_MANIFEST_URL = ("https://raw.githubusercontent.com/"
                        "ErManoj-Sharma/ClipForge/master/dist/version.json")
 

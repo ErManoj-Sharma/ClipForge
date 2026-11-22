@@ -23,6 +23,7 @@ FILES = [
     "setup.ps1", "setup.bat", "tools_menu.reg",
     "uninstall.ps1", "uninstall.bat", "uninstall_tools.reg",
     "remove_duplicate_png.reg",
+    "rightkit.ico",
 ]
 
 # The base64 blob is appended after "exit /b", so cmd never parses it.

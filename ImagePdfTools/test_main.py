@@ -569,7 +569,23 @@ def test_menu_has_check_for_update():
 
 def test_setup_writes_version_file():
     setup = open(_here("setup.ps1"), encoding="utf-8").read()
-    assert '$version = "1.0.1"' in setup
+    assert '$version = "1.0.2"' in setup
     assert 'Set-Content -LiteralPath "$dest\\version.txt"' in setup
     main_src = open(_here("main.py"), encoding="utf-8").read()
-    assert 'CURRENT_VERSION = "1.0.1"' in main_src
+    assert 'CURRENT_VERSION = "1.0.2"' in main_src
+
+
+def test_menu_uses_rightkit_icon():
+    reg = open(_here("tools_menu.reg"), encoding="utf-8").read()
+    assert reg.count("rightkit.ico") == 2        # both RightKit parents (image + pdf)
+    assert "imageres.dll,-5305" not in reg
+
+
+def test_setup_copies_rightkit_icon():
+    setup = open(_here("setup.ps1"), encoding="utf-8").read()
+    assert "'rightkit.ico'" in setup
+
+
+def test_rightkit_ico_is_valid_icon():
+    data = open(_here("rightkit.ico"), "rb").read()
+    assert data[:4] == b"\x00\x00\x01\x00"       # ICO signature

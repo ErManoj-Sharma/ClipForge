@@ -4,7 +4,7 @@ Windows Registry Editor Version 5.00
 [HKEY_CURRENT_USER\Software\Classes\SystemFileAssociations\image\shell\ImagePdfTools]
 "MUIVerb"="RightKit Image and Pdf Tools"
 "SubCommands"=""
-"Icon"="imageres.dll,-5305"
+"Icon"="C:\\Scripts\\imagepdf\\rightkit.ico"
 
 ; -- conversion group --
 [HKEY_CURRENT_USER\Software\Classes\SystemFileAssociations\image\shell\ImagePdfTools\shell\01_ConvertToPDF]
@@ -65,7 +65,7 @@ Windows Registry Editor Version 5.00
 [HKEY_CURRENT_USER\Software\Classes\SystemFileAssociations\.pdf\shell\ImagePdfTools]
 "MUIVerb"="RightKit Image and Pdf Tools"
 "SubCommands"=""
-"Icon"="imageres.dll,-5305"
+"Icon"="C:\\Scripts\\imagepdf\\rightkit.ico"
 
 ; -- merge group --
 [HKEY_CURRENT_USER\Software\Classes\SystemFileAssociations\.pdf\shell\ImagePdfTools\shell\01_MergeSelected]

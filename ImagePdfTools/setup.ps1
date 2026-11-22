@@ -17,7 +17,7 @@ if (-not ([Security.Principal.WindowsPrincipal]$id).IsInRole([Security.Principal
 Write-Host "=== RightKit Image and Pdf Tools installer ==="
 
 $dest    = "C:\Scripts\imagepdf"
-$version = "1.0.1"
+$version = "1.0.2"
 $src     = Split-Path $MyInvocation.MyCommand.Path -Parent
 $poppler = "C:\poppler\poppler-24.08.0\Library\bin"
 
@@ -93,8 +93,10 @@ New-Item -ItemType Directory -Force -Path $dest | Out-Null
 Copy-Item "$src\main.py", "$src\main.pyw", "$src\tools.py", `
           "$src\image_tools.py", "$src\pdf_tools.py", `
           "$src\tools_common.py", "$src\dialogs.py" -Destination $dest -Force
-# keep the uninstaller alongside the installed files (present in the packaged installer)
-foreach ($f in 'uninstall.ps1', 'uninstall.bat', 'uninstall_tools.reg') {
+# keep the uninstaller + RightKit icon alongside the installed files (both are
+# present in the packaged installer)
+foreach ($f in 'uninstall.ps1', 'uninstall.bat', 'uninstall_tools.reg',
+              'rightkit.ico') {
   if (Test-Path "$src\$f") { Copy-Item "$src\$f" -Destination $dest -Force }
 }
 # version file the 'Check for Update' action compares against

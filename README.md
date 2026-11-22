@@ -1,5 +1,4 @@
-# Image & PDF Tools — Documentation
-opencode -s ses_e15c6c992ffe18SdPUSAueCMr2
+# RightKit Image and Pdf Tools — Documentation
 A Windows right-click suite for image and PDF work. No app window: everything
 lives in the Explorer context menu (plus a tiny dialog only when a "custom"
 value is needed). All deployable files sit in the **`ImagePdfTools/`** folder —
@@ -9,7 +8,7 @@ copy that one folder to Windows; on the machine it deploys to `C:\Scripts\imagep
 
 ## 1. What you can do
 
-**Right-click an image → "Image & PDF Tools"**
+**Right-click an image → "RightKit Image and Pdf Tools"**
 
 Items are grouped with separator lines — conversions first, then resizes, then
 Contact Developer.
@@ -24,7 +23,7 @@ Contact Developer.
 | Resize to Pixel Size…             | Fit image inside W × H you type (aspect kept, never upscales) |
 | Contact Developer                 | Opens the developer's links page in your browser              |
 
-**Right-click a PDF → "Image & PDF Tools"**
+**Right-click a PDF → "RightKit Image and Pdf Tools"**
 
 Groups, separated by lines: **merge**, **convert**, **split**, **compress**,
 then **Contact Developer**.
@@ -114,7 +113,7 @@ just the registry part.
 ### Windows 11 note
 Win11's compact menu hides classic verbs behind **Show more options**. Setup
 restores the **classic full menu as the default first menu** (one HKCU key,
-Explorer restart — setup asks before restarting). That puts Image & PDF Tools
+Explorer restart — setup asks before restarting). That puts RightKit Image and Pdf Tools
 on the first right-click. Running `uninstall.bat` reverts Windows 11 to its
 default compact menu. (If a future Windows update re-enables the compact
 menu, re-run `setup.bat`.) To restore the default compact menu **without**
@@ -136,7 +135,7 @@ You right-click a file
         │
         ▼
 Registry (HKCU\Software\Classes\SystemFileAssociations\image\.pdf\shell)
-        │  MUIVerb "Image & PDF Tools" + nested shell\NN_<verb>\command keys
+        │  MUIVerb "RightKit Image and Pdf Tools" + nested shell\NN_<verb>\command keys
         ▼
 pyw.exe "C:\Scripts\imagepdf\main.pyw" <action> "<file path>"
         │  pyw = the windowless Python launcher → no console flash

@@ -1,4 +1,4 @@
-# Image & PDF Tools — Suggested Features (backlog)
+# RightKit Image and Pdf Tools — Suggested Features (backlog)
 
 Ideas for future versions, prioritized. Priority reflects user value vs.
 effort given the current architecture (queue/lock trick, per-file verb

@@ -1,4 +1,4 @@
-# Image & PDF Tools uninstaller
+# RightKit Image and Pdf Tools uninstaller
 $ErrorActionPreference = "Stop"
 $src = Split-Path $MyInvocation.MyCommand.Path -Parent
 

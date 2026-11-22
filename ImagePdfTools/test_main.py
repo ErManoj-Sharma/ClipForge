@@ -391,6 +391,13 @@ def test_menu_order_is_grouped():
                    "99_ContactDeveloper"]
 
 
+def test_menu_label_is_consistent():
+    s = _reg_sections()
+    label = '"MUIVerb"="RightKit Image and Pdf Tools"'
+    for parent in (IMG.rsplit("\\shell\\", 1)[0], PDF.rsplit("\\shell\\", 1)[0]):
+        assert label in s[parent]
+
+
 def test_menu_verbs_map_to_actions():
     import re
     reg = open(_here("tools_menu.reg"), encoding="utf-8").read()

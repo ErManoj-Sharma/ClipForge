@@ -1,4 +1,4 @@
-"""Image & PDF Tools — action router.
+"""RightKit Image and Pdf Tools — action router.
 Usage: pyw.exe main.pyw <action> <file> [file...]
 """
 import sys
@@ -19,12 +19,12 @@ COMPRESS_KB = {"compress-100": 100, "compress-500": 500,
 
 def show_error(msg):
     import tkinter.messagebox as mb
-    mb.showerror("Image & PDF Tools", msg)
+    mb.showerror("RightKit Image and Pdf Tools", msg)
 
 
 def show_info(msg):
     import tkinter.messagebox as mb
-    mb.showinfo("Image & PDF Tools", msg)
+    mb.showinfo("RightKit Image and Pdf Tools", msg)
 
 
 def _progress(title, fn, *args, **kwargs):

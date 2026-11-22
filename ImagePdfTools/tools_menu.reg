@@ -1,8 +1,8 @@
 Windows Registry Editor Version 5.00
 
-; ---- Right-click on images: Image & PDF Tools submenu ----
+; ---- Right-click on images: RightKit Image and Pdf Tools submenu ----
 [HKEY_CURRENT_USER\Software\Classes\SystemFileAssociations\image\shell\ImagePdfTools]
-"MUIVerb"="Image & PDF Tools"
+"MUIVerb"="RightKit Image and Pdf Tools"
 "SubCommands"=""
 "Icon"="imageres.dll,-5305"
 
@@ -61,9 +61,9 @@ Windows Registry Editor Version 5.00
 [HKEY_CURRENT_USER\Software\Classes\SystemFileAssociations\image\shell\ImagePdfTools\shell\99_ContactDeveloper\command]
 @="rundll32 url.dll,FileProtocolHandler https://manoj-sharma-portfolio.vercel.app/links"
 
-; ---- Right-click on PDFs: Image & PDF Tools submenu ----
+; ---- Right-click on PDFs: RightKit Image and Pdf Tools submenu ----
 [HKEY_CURRENT_USER\Software\Classes\SystemFileAssociations\.pdf\shell\ImagePdfTools]
-"MUIVerb"="Image & PDF Tools"
+"MUIVerb"="RightKit Image and Pdf Tools"
 "SubCommands"=""
 "Icon"="imageres.dll,-5305"
 

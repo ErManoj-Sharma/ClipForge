@@ -76,6 +76,10 @@ New-Item -ItemType Directory -Force -Path $dest | Out-Null
 Copy-Item "$src\main.py", "$src\main.pyw", "$src\tools.py", `
           "$src\image_tools.py", "$src\pdf_tools.py", `
           "$src\tools_common.py", "$src\dialogs.py" -Destination $dest -Force
+# keep the uninstaller alongside the installed files (present in the packaged installer)
+foreach ($f in 'uninstall.ps1', 'uninstall.bat', 'uninstall_tools.reg') {
+  if (Test-Path "$src\$f") { Copy-Item "$src\$f" -Destination $dest -Force }
+}
 
 # ---------- 5. Registry + Send To shortcut ----------
 # The .reg is a template: __PYW__ is replaced with the absolute launcher path.

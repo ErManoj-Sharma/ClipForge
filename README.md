@@ -80,7 +80,17 @@ Result in all cases: `merged.pdf` next to the first file.
 
 ## 2. Install / Uninstall (one click)
 
-### Install
+### Install — share one file
+Cleanest for handing someone your app:
+
+1. Run `python3 build_installer.py` in the repo → produces `dist/RightKitSetup.cmd`
+   (re-run it after changing any packaged file).
+2. Send the single file `RightKitSetup.cmd` to the user.
+3. They **double-click it** → a console window shows "Extracting RightKit...",
+   extracts to `%TEMP%`, then runs the normal install flow. That's the entire
+   install — no extra steps for them.
+
+Also works straight from a source checkout:
 **Double-click `setup.bat`.** It launches `setup.ps1` (you confirm one UAC
 prompt — admin is needed to write `C:\Scripts\imagepdf` and `C:\poppler`).
 The script checks, in order, and installs only what is missing:

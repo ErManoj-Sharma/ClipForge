@@ -366,7 +366,8 @@ def test_menu_groups_have_separators():
     s = _reg_sections()
     # only the first item of each group after the first carries the separator
     expected = {PDF + "04_ConvertToImages", PDF + "06_SplitEveryPage",
-                PDF + "08_Compress100KB", PDF + "99_ContactDeveloper",
+                PDF + "08_Compress100KB", PDF + "98_CheckForUpdate",
+                PDF + "99_ContactDeveloper",
                 IMG + "04_Resize50KB", IMG + "99_ContactDeveloper"}
     got = {k for k, v in s.items()
            if SEP in v and not k.endswith("\\command")}
@@ -382,7 +383,7 @@ def test_menu_order_is_grouped():
                    "06_SplitEveryPage", "07_SplitEveryN",
                    "08_Compress100KB", "09_Compress500KB", "10_Compress1MB",
                    "11_Compress2MB", "12_CompressCustom",
-                   "99_ContactDeveloper"]
+                   "98_CheckForUpdate", "99_ContactDeveloper"]
     img = sorted(k[len(IMG):] for k in s
                  if k.startswith(IMG) and not k.endswith("\\command"))
     assert img == ["01_ConvertToPDF", "02_ConvertToPNG", "03_ConvertToJPG",
@@ -427,3 +428,112 @@ def test_setup_installs_vc_redistributable():
     assert "https://aka.ms/vs/17/release/vc_redist.x64.exe" in setup
     assert 'Start-Process -FilePath $redist -ArgumentList "/install", "/quiet", "/norestart" -Wait' in setup
     assert "MSVCP140.dll still missing after install" in setup
+
+
+def test_version_tuple_compare():
+    assert main_mod._version_tuple("1.0.1") > main_mod._version_tuple("1.0.0")
+    assert main_mod._version_tuple("1.0.0") == main_mod._version_tuple("1.0")
+    assert main_mod._version_tuple("1.1.0") > main_mod._version_tuple("1.0.9")
+
+
+def test_installed_version_fallback(monkeypatch):
+    monkeypatch.setattr(main_mod, "VERSION_FILE",
+                        os.path.join(os.getcwd(), "nope-version.txt"))
+    assert main_mod._installed_version() == main_mod.CURRENT_VERSION
+
+
+def test_check_update_up_to_date(monkeypatch):
+    monkeypatch.setattr(main_mod, "_installed_version", lambda: "1.0.0")
+    monkeypatch.setattr(main_mod, "_fetch_manifest", lambda: {"version": "1.0.0"})
+    msgs, dls = [], []
+    monkeypatch.setattr(main_mod, "show_info", lambda m: msgs.append(m))
+    monkeypatch.setattr(main_mod, "show_error", lambda m: msgs.append(m))
+    monkeypatch.setattr(main_mod, "_download", lambda *a, **k: dls.append(a))
+    monkeypatch.setattr(main_mod, "_open_installer", lambda p: dls.append(p))
+    main_mod.check_update()
+    assert any("up to date" in m for m in msgs)
+    assert dls == []
+
+
+def test_check_update_newer_auto_updates(monkeypatch):
+    monkeypatch.setattr(main_mod, "_installed_version", lambda: "1.0.0")
+    monkeypatch.setattr(main_mod, "_fetch_manifest",
+                        lambda: {"version": "1.0.1",
+                                 "installer": "https://x/new.cmd"})
+    msgs, dls, opens = [], [], []
+    monkeypatch.setattr(main_mod, "show_info", lambda m: msgs.append(m))
+    monkeypatch.setattr(main_mod, "show_error", lambda m: msgs.append(m))
+    monkeypatch.setattr(main_mod, "_ask_yes", lambda *a, **k: True)
+    monkeypatch.setattr(main_mod, "_download",
+                        lambda url, path: dls.append((url, path)))
+    monkeypatch.setattr(main_mod, "_open_installer", lambda p: opens.append(p))
+    main_mod.check_update()
+    assert dls and dls[0][0] == "https://x/new.cmd"
+    assert opens
+
+
+def test_check_update_newer_declined(monkeypatch):
+    monkeypatch.setattr(main_mod, "_installed_version", lambda: "1.0.0")
+    monkeypatch.setattr(main_mod, "_fetch_manifest",
+                        lambda: {"version": "1.0.1", "installer": "https://x/new.cmd"})
+    dls, opens, msgs = [], [], []
+    monkeypatch.setattr(main_mod, "_ask_yes", lambda *a, **k: False)
+    monkeypatch.setattr(main_mod, "show_info", lambda m: msgs.append(m))
+    monkeypatch.setattr(main_mod, "show_error", lambda m: msgs.append(m))
+    monkeypatch.setattr(main_mod, "_download", lambda url, path: dls.append(url))
+    monkeypatch.setattr(main_mod, "_open_installer", lambda p: opens.append(p))
+    main_mod.check_update()
+    assert not dls and not opens
+    assert any("not downloaded" in m for m in msgs)
+
+
+def test_check_update_no_url_shows_info(monkeypatch):
+    monkeypatch.setattr(main_mod, "_installed_version", lambda: "1.0.0")
+    monkeypatch.setattr(main_mod, "_fetch_manifest", lambda: {"version": "9.9", "installer": ""})
+    msgs, asked = [], []
+    monkeypatch.setattr(main_mod, "show_info", lambda m: msgs.append(m))
+    monkeypatch.setattr(main_mod, "show_error", lambda m: msgs.append(m))
+    monkeypatch.setattr(main_mod, "_ask_yes", lambda *a, **k: (asked.append(a), False)[1])
+    main_mod.check_update()
+    assert any("9.9" in m for m in msgs)
+    assert not asked
+
+
+def test_check_update_network_error(monkeypatch):
+    def boom():
+        raise RuntimeError("no network")
+    monkeypatch.setattr(main_mod, "_fetch_manifest", boom)
+    msgs = []
+    monkeypatch.setattr(main_mod, "show_error", lambda m: msgs.append(m))
+    main_mod.check_update()
+    assert any("Could not check for updates" in m for m in msgs)
+
+
+def test_dispatch_check_update_needs_no_file(monkeypatch):
+    calls = {}
+    run(monkeypatch, ["check-update"],
+        check_update=lambda: calls.setdefault("check_update", True))
+    assert calls.get("check_update")
+    assert "error" not in calls
+
+
+def test_menu_has_check_for_update():
+    reg = open(_here("tools_menu.reg"), encoding="utf-8").read()
+    assert '@="Check for Update"' in reg
+    pdf = "SystemFileAssociations\\.pdf\\shell\\ImagePdfTools\\shell\\"
+    i98 = reg.index(pdf + "98_CheckForUpdate")
+    i99 = reg.index(pdf + "99_ContactDeveloper")
+    assert i98 < i99                        # Check for Update is above Contact Developer
+    seg = reg[i98:i99]
+    assert "command" in seg and "check-update" in seg
+    import json
+    mj = open(_here("../dist/version.json"), encoding="utf-8").read()
+    assert json.loads(mj)["version"]
+
+
+def test_setup_writes_version_file():
+    setup = open(_here("setup.ps1"), encoding="utf-8").read()
+    assert '$version = "1.0.0"' in setup
+    assert 'Set-Content -LiteralPath "$dest\\version.txt"' in setup
+    main_src = open(_here("main.py"), encoding="utf-8").read()
+    assert 'CURRENT_VERSION = "1.0.0"' in main_src

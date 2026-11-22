@@ -17,6 +17,7 @@ if (-not ([Security.Principal.WindowsPrincipal]$id).IsInRole([Security.Principal
 Write-Host "=== RightKit Image and Pdf Tools installer ==="
 
 $dest    = "C:\Scripts\imagepdf"
+$version = "1.0.0"
 $src     = Split-Path $MyInvocation.MyCommand.Path -Parent
 $poppler = "C:\poppler\poppler-24.08.0\Library\bin"
 
@@ -96,6 +97,8 @@ Copy-Item "$src\main.py", "$src\main.pyw", "$src\tools.py", `
 foreach ($f in 'uninstall.ps1', 'uninstall.bat', 'uninstall_tools.reg') {
   if (Test-Path "$src\$f") { Copy-Item "$src\$f" -Destination $dest -Force }
 }
+# version file the 'Check for Update' action compares against
+Set-Content -LiteralPath "$dest\version.txt" -Value $version -Encoding UTF8
 
 # ---------- 6. Registry + Send To shortcut ----------
 # The .reg is a template: __PYW__ is replaced with the absolute launcher path.

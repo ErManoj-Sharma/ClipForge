@@ -1,6 +1,7 @@
 """RightKit Image and Pdf Tools — action router.
 Usage: pyw.exe main.pyw <action> <file> [file...]
 """
+import os
 import sys
 import time
 import traceback
@@ -15,6 +16,10 @@ RESIZE_KB = {"resize-kb-50": 50, "resize-kb-100": 100,
              "resize-kb-150": 150, "resize-kb-300": 300}
 COMPRESS_KB = {"compress-100": 100, "compress-500": 500,
                "compress-1024": 1024, "compress-2048": 2048}
+VERSION_FILE = r"C:\Scripts\imagepdf\version.txt"
+CURRENT_VERSION = "1.0.0"
+UPDATE_MANIFEST_URL = ("https://raw.githubusercontent.com/"
+                       "ErManoj-Sharma/ClipForge/master/dist/version.json")
 
 
 def show_error(msg):
@@ -94,12 +99,92 @@ def _merge_selected(src):
         release_lock(lock)
 
 
+def _version_tuple(v):
+    parts = []
+    for p in v.split("."):
+        try:
+            parts.append(int(p))
+        except ValueError:
+            parts.append(0)
+    while len(parts) < 3:
+        parts.append(0)
+    return tuple(parts)
+
+
+def _installed_version():
+    try:
+        with open(VERSION_FILE, encoding="utf-8") as f:
+            return f.read().strip()
+    except OSError:
+        return CURRENT_VERSION
+
+
+def _fetch_manifest():
+    import json
+    import urllib.request
+    with urllib.request.urlopen(UPDATE_MANIFEST_URL, timeout=10) as r:
+        return json.loads(r.read().decode("utf-8"))
+
+
+def _download(url, path):
+    import urllib.request
+    with urllib.request.urlopen(url, timeout=30) as r:
+        with open(path, "wb") as f:
+            f.write(r.read())
+
+
+def _open_installer(path):
+    os.startfile(path)
+
+
+def _ask_yes(title, msg):
+    import tkinter.messagebox as mb
+    return mb.askyesno(title, msg)
+
+
+def check_update():
+    """'Check for Update' — fetch the latest version manifest and, if newer
+    than the installed one, download + run the new installer (the install
+    itself runs setup.ps1, so the update completes on re-launch)."""
+    try:
+        m = _fetch_manifest()
+    except Exception as e:
+        show_error("Could not check for updates:\n" + str(e))
+        return
+    local = _installed_version()
+    remote = str(m.get("version", "")).strip()
+    if not remote or _version_tuple(remote) <= _version_tuple(local):
+        show_info(f"RightKit is up to date (v{local}).")
+        return
+    url = str(m.get("installer", "")).strip()
+    if not url:
+        show_info(f"New version {remote} is available (no download URL).")
+        return
+    if not _ask_yes("Update available",
+                    f"RightKit {remote} is available.\nDownload and update now?"):
+        show_info(f"New version {remote} is available (not downloaded).")
+        return
+    tmp = os.path.join(os.environ.get("TEMP", r"C:\Windows\Temp"),
+                       "RightKitSetup.cmd")
+    try:
+        _download(url, tmp)
+    except Exception as e:
+        show_error("Download failed:\n" + str(e))
+        return
+    _open_installer(tmp)
+    show_info(f"RightKit {remote}: update initiated.\n"
+              f"Run the installer when it opens (copy of: {tmp}).")
+
+
 def dispatch(argv):
     if not argv:
         show_error("No action given")
         return
     action, files = argv[0], argv[1:]
     try:
+        if action == "check-update":
+            check_update()
+            return
         if not files:
             show_error("No file selected")
             return

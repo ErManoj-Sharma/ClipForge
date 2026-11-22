@@ -26,7 +26,7 @@ Contact Developer.
 **Right-click a PDF → "RightKit Image and Pdf Tools"**
 
 Groups, separated by lines: **merge**, **convert**, **split**, **compress**,
-then **Contact Developer**.
+then **Check for Update** and **Contact Developer**.
 
 | Menu item                              | What it does                                                            |
 |----------------------------------------|-------------------------------------------------------------------------|
@@ -39,6 +39,7 @@ then **Contact Developer**.
 | Split Every N Pages…                   | Type N → chunks of N pages (`file_1-3.pdf`, `file_4-6.pdf`…)            |
 | Compress to 100 / 500 KB / 1 MB / 2 MB | Rebuild the PDF smaller than that ceiling                               |
 | Compress to Custom…                    | Type any KB target                                                      |
+| Check for Update                       | Fetches the latest version manifest; if newer, downloads + runs the new installer |
 | Contact Developer                      | Opens the developer's links page in your browser                        |
 
 **Merging PDFs — three ways**
@@ -67,6 +68,19 @@ then **Contact Developer**.
    reorder dialog.
 
 Result in all cases: `merged.pdf` next to the first file.
+
+### Auto-update (Check for Update)
+PDF submenu → **Check for Update**. It fetches a manifest —
+`https://raw.githubusercontent.com/ErManoj-Sharma/ClipForge/master/dist/version.json`
+(`{ "version": "1.0.0", "installer": "<url>" }`) — and compares with the version
+written by `setup.ps1` to `C:\Scripts\imagepdf\version.txt`. If newer, it offers
+**download + update**: downloads the installer to `%TEMP%` and launches it
+(the installer re-runs `setup.ps1`, so the update completes). Up to date or
+older → "RightKit is up to date (vX)".
+
+**Publishing a release:** bump `CURRENT_VERSION` in `main.py`, `$version` in
+`setup.ps1`, regenerate `dist/version.json` (with the release-download URL),
+then tag + upload the new `RightKitSetup.cmd`.
 
 ### Rules that apply everywhere
 - Output is always saved **next to the input file**.

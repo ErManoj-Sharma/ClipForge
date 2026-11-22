@@ -134,6 +134,13 @@ Windows Registry Editor Version 5.00
 [HKEY_CURRENT_USER\Software\Classes\SystemFileAssociations\.pdf\shell\ImagePdfTools\shell\12_CompressCustom\command]
 @="__PYW__ \"C:\\Scripts\\imagepdf\\main.pyw\" compress-custom \"%1\""
 
+; -- check for update (separator above) --
+[HKEY_CURRENT_USER\Software\Classes\SystemFileAssociations\.pdf\shell\ImagePdfTools\shell\98_CheckForUpdate]
+@="Check for Update"
+"CommandFlags"=dword:00000020
+[HKEY_CURRENT_USER\Software\Classes\SystemFileAssociations\.pdf\shell\ImagePdfTools\shell\98_CheckForUpdate\command]
+@="__PYW__ \"C:\\Scripts\\imagepdf\\main.pyw\" check-update"
+
 ; -- contact (separator above) --
 [HKEY_CURRENT_USER\Software\Classes\SystemFileAssociations\.pdf\shell\ImagePdfTools\shell\99_ContactDeveloper]
 @="Contact Developer"

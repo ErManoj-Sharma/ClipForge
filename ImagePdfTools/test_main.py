@@ -417,3 +417,13 @@ def test_setup_wipes_stale_submenu_verbs_before_import():
         assert stale in setup
     # the wipe must happen BEFORE reg import, or the current verbs are deleted
     assert setup.index("Remove-Item -Recurse") < setup.index('reg import "$gen"')
+
+
+def test_setup_installs_vc_redistributable():
+    """Poppler's pdfinfo.exe fails without MSVCP140.dll — setup must install it
+    (else every PDF conversion dies with PDFPageCountError)."""
+    setup = open(_here("setup.ps1"), encoding="utf-8").read()
+    assert '$env:SystemRoot\\System32\\msvcp140.dll' in setup
+    assert "https://aka.ms/vs/17/release/vc_redist.x64.exe" in setup
+    assert 'Start-Process -FilePath $redist -ArgumentList "/install", "/quiet", "/norestart" -Wait' in setup
+    assert "MSVCP140.dll still missing after install" in setup

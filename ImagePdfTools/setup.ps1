@@ -59,7 +59,23 @@ Write-Host "Python launcher: $pyw"
 if ($LASTEXITCODE -ne 0) { throw "pip install failed" }
 Write-Host "Python packages OK"
 
-# ---------- 3. Poppler (pdf2image needs its DLLs) ----------
+# ---------- 3. Visual C++ Redistributable (Poppler's pdfinfo.exe needs it) ----------
+# pdfinfo.exe fails to start without MSVCP140.dll ("The code execution cannot
+# proceed because MSVCP140.dll Was not found"), which turns every PDF
+# conversion/compress into "PDFPageCountError: Unable to get page count".
+$vsRuntime = "$env:SystemRoot\System32\msvcp140.dll"
+if (-not (Test-Path $vsRuntime)) {
+    Write-Host "Visual C++ runtime (MSVCP140.dll) missing - installing..."
+    $redist = "$env:TEMP\vc_redist.x64.exe"
+    Invoke-WebRequest "https://aka.ms/vs/17/release/vc_redist.x64.exe" -OutFile $redist
+    Start-Process -FilePath $redist -ArgumentList "/install", "/quiet", "/norestart" -Wait
+    Remove-Item -Force $redist
+    if (-not (Test-Path $vsRuntime)) {
+        throw "MSVCP140.dll still missing after install - install the Visual C++ Redistributable from https://aka.ms/vs/17/release/vc_redist.x64.exe and re-run setup"
+    }
+}
+
+# ---------- 4. Poppler (pdf2image needs its DLLs) ----------
 if (-not (Test-Path $poppler)) {
     Write-Host "Poppler not found - downloading..."
     $zip = "$env:TEMP\poppler.zip"
@@ -71,7 +87,7 @@ if (-not (Test-Path $poppler)) {
 if (-not (Test-Path $poppler)) { throw "Poppler install failed" }
 Write-Host "Poppler OK"
 
-# ---------- 4. Copy scripts ----------
+# ---------- 5. Copy scripts ----------
 New-Item -ItemType Directory -Force -Path $dest | Out-Null
 Copy-Item "$src\main.py", "$src\main.pyw", "$src\tools.py", `
           "$src\image_tools.py", "$src\pdf_tools.py", `
@@ -81,7 +97,7 @@ foreach ($f in 'uninstall.ps1', 'uninstall.bat', 'uninstall_tools.reg') {
   if (Test-Path "$src\$f") { Copy-Item "$src\$f" -Destination $dest -Force }
 }
 
-# ---------- 5. Registry + Send To shortcut ----------
+# ---------- 6. Registry + Send To shortcut ----------
 # The .reg is a template: __PYW__ is replaced with the absolute launcher path.
 # Context-menu commands must launch an executable - a bare .pyw document is
 # never executed, and bare "pyw.exe" breaks when the launcher is not on PATH.
@@ -120,7 +136,7 @@ $lnk.Arguments    = "`"C:\Scripts\imagepdf\main.pyw`" merge"
 $lnk.IconLocation = "imageres.dll,-5372"
 $lnk.Save()
 
-# ---------- 6. Windows 11: show the full (classic) menu on first right-click ----------
+# ---------- 7. Windows 11: show the full (classic) menu on first right-click ----------
 # Win11's compact menu hides classic verbs behind "Show more options"; a static
 # verb cannot be added to the new menu without an MSIX package. Restoring the
 # classic menu puts RightKit Image and Pdf Tools on the first right-click.

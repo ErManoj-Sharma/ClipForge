@@ -11,6 +11,9 @@ copy that one folder to Windows; on the machine it deploys to `C:\Scripts\imagep
 
 **Right-click an image → "Image & PDF Tools"**
 
+Items are grouped with separator lines — conversions first, then resizes, then
+Contact Developer.
+
 | Menu item                         | What it does                                                  |
 |-----------------------------------|---------------------------------------------------------------|
 | Convert to PDF                    | Image → one-page PDF                                          |
@@ -23,18 +26,21 @@ copy that one folder to Windows; on the machine it deploys to `C:\Scripts\imagep
 
 **Right-click a PDF → "Image & PDF Tools"**
 
+Groups, separated by lines: **merge**, **convert**, **split**, **compress**,
+then **Contact Developer**.
+
 | Menu item                              | What it does                                                            |
 |----------------------------------------|-------------------------------------------------------------------------|
 | Merge Selected PDFs                    | 2+ selected: merge dialog. 1 selected: adds it to the merge queue       |
+| Queue for Merge                        | Add to merge queue — on multi-select each file queues itself            |
+| Merge Queued PDFs                      | Reorder + merge the queue, then clear it                                |
 | Convert to Images (PNG)                | Each page → `.png` at 200 dpi (multi-page: `file_1.png`, `file_2.png`…) |
 | Convert to Images (JPG)                | Each page → `.jpg` at 200 dpi, quality 90 — much smaller for photo pages |
-| Contact Developer                      | Opens the developer's links page in your browser                        |
 | Split Every Page                       | `file.pdf` → `file_1.pdf`, `file_2.pdf`, … (one page each)              |
 | Split Every N Pages…                   | Type N → chunks of N pages (`file_1-3.pdf`, `file_4-6.pdf`…)            |
 | Compress to 100 / 500 KB / 1 MB / 2 MB | Rebuild the PDF smaller than that ceiling                               |
 | Compress to Custom…                    | Type any KB target                                                      |
-| Queue for Merge                        | Add to merge queue — on multi-select each file queues itself            |
-| Merge Queued PDFs                      | Reorder + merge the queue, then clear it                                |
+| Contact Developer                      | Opens the developer's links page in your browser                        |
 
 **Merging PDFs — three ways**
 
@@ -144,9 +150,19 @@ main.py  dispatch(argv)  →  routes <action> to the matching function
   one patchable namespace (used by the tests).
 - Registry is under **HKCU** (per-user): no admin needed, survives for your
   account only.
+- Menu items are grouped with **separator lines**: a verb key with
+  `"CommandFlags"=dword:00000020` draws a line *above* that item (Explorer
+  honours this inside a `SubCommands=""` cascade). The first item of each
+  group after the first carries it, so the PDF menu reads merge / convert /
+  split / compress / contact and the image menu reads convert / resize /
+  contact. Grouping is by the numeric key prefix (`NN_…` sorts alphabetically).
 - The **Contact Developer** verb is the one entry that doesn't go through
   Python — its command is `rundll32 url.dll,FileProtocolHandler <url>`, which
   opens the links page in the default browser.
+- `setup.ps1` deletes the whole old `ImagePdfTools\shell` tree (HKCU + HKLM)
+  **before** importing the `.reg`, so renamed/removed verbs can't linger as
+  duplicates. `remove_duplicate_png.reg` does just the PNG-verb cleanup for a
+  quick fix without rerunning the full installer.
 - **Merging from multi-select** works despite Explorer firing the verb once
   per file: `Merge Selected PDFs` invocations append their file to a shared
   list in `%LOCALAPPDATA%\ImagePdfTools` and the first invocation to win an
@@ -169,6 +185,7 @@ main.py  dispatch(argv)  →  routes <action> to the matching function
 | `tools.py`                              | namespace re-export (test seam)              |
 | `tools_menu.reg`, `uninstall_tools.reg` | registry add / remove                        |
 | `setup.ps1`, `setup.bat`                | one-click install (+ double-click wrapper)   |
+| `remove_duplicate_png.reg`              | one-double-click fix for the old duplicate PNG verb |
 | `uninstall.ps1`, `uninstall.bat`        | one-step uninstall (+ double-click wrapper)  |
 | `restore_default_menu.bat`              | revert Win11 to the compact default menu     |
 

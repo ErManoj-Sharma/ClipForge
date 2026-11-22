@@ -6,6 +6,7 @@ Windows Registry Editor Version 5.00
 "SubCommands"=""
 "Icon"="imageres.dll,-5305"
 
+; -- conversion group --
 [HKEY_CURRENT_USER\Software\Classes\SystemFileAssociations\image\shell\ImagePdfTools\shell\01_ConvertToPDF]
 @="Convert to PDF"
 [HKEY_CURRENT_USER\Software\Classes\SystemFileAssociations\image\shell\ImagePdfTools\shell\01_ConvertToPDF\command]
@@ -21,8 +22,10 @@ Windows Registry Editor Version 5.00
 [HKEY_CURRENT_USER\Software\Classes\SystemFileAssociations\image\shell\ImagePdfTools\shell\03_ConvertToJPG\command]
 @="__PYW__ \"C:\\Scripts\\imagepdf\\main.pyw\" to-jpg \"%1\""
 
+; -- resize group (CommandFlags 0x20 = separator line above this item) --
 [HKEY_CURRENT_USER\Software\Classes\SystemFileAssociations\image\shell\ImagePdfTools\shell\04_Resize50KB]
 @="Resize to 50 KB"
+"CommandFlags"=dword:00000020
 [HKEY_CURRENT_USER\Software\Classes\SystemFileAssociations\image\shell\ImagePdfTools\shell\04_Resize50KB\command]
 @="__PYW__ \"C:\\Scripts\\imagepdf\\main.pyw\" resize-kb-50 \"%1\""
 
@@ -51,8 +54,10 @@ Windows Registry Editor Version 5.00
 [HKEY_CURRENT_USER\Software\Classes\SystemFileAssociations\image\shell\ImagePdfTools\shell\09_ResizePixels\command]
 @="__PYW__ \"C:\\Scripts\\imagepdf\\main.pyw\" resize-pixels \"%1\""
 
+; -- contact (separator above) --
 [HKEY_CURRENT_USER\Software\Classes\SystemFileAssociations\image\shell\ImagePdfTools\shell\99_ContactDeveloper]
 @="Contact Developer"
+"CommandFlags"=dword:00000020
 [HKEY_CURRENT_USER\Software\Classes\SystemFileAssociations\image\shell\ImagePdfTools\shell\99_ContactDeveloper\command]
 @="rundll32 url.dll,FileProtocolHandler https://manoj-sharma-portfolio.vercel.app/links"
 
@@ -62,67 +67,76 @@ Windows Registry Editor Version 5.00
 "SubCommands"=""
 "Icon"="imageres.dll,-5305"
 
+; -- merge group --
 [HKEY_CURRENT_USER\Software\Classes\SystemFileAssociations\.pdf\shell\ImagePdfTools\shell\01_MergeSelected]
 @="Merge Selected PDFs"
 [HKEY_CURRENT_USER\Software\Classes\SystemFileAssociations\.pdf\shell\ImagePdfTools\shell\01_MergeSelected\command]
 @="__PYW__ \"C:\\Scripts\\imagepdf\\main.pyw\" merge-selected \"%1\""
 
-[HKEY_CURRENT_USER\Software\Classes\SystemFileAssociations\.pdf\shell\ImagePdfTools\shell\02_ConvertToImages]
-@="Convert to Images (PNG)"
-[HKEY_CURRENT_USER\Software\Classes\SystemFileAssociations\.pdf\shell\ImagePdfTools\shell\02_ConvertToImages\command]
-@="__PYW__ \"C:\\Scripts\\imagepdf\\main.pyw\" pdf-to-images \"%1\""
-
-[HKEY_CURRENT_USER\Software\Classes\SystemFileAssociations\.pdf\shell\ImagePdfTools\shell\02_ConvertToImagesJPG]
-@="Convert to Images (JPG)"
-[HKEY_CURRENT_USER\Software\Classes\SystemFileAssociations\.pdf\shell\ImagePdfTools\shell\02_ConvertToImagesJPG\command]
-@="__PYW__ \"C:\\Scripts\\imagepdf\\main.pyw\" pdf-to-images-jpg \"%1\""
-
-[HKEY_CURRENT_USER\Software\Classes\SystemFileAssociations\.pdf\shell\ImagePdfTools\shell\02_SplitEveryPage]
-@="Split Every Page"
-[HKEY_CURRENT_USER\Software\Classes\SystemFileAssociations\.pdf\shell\ImagePdfTools\shell\02_SplitEveryPage\command]
-@="__PYW__ \"C:\\Scripts\\imagepdf\\main.pyw\" split-page \"%1\""
-
-[HKEY_CURRENT_USER\Software\Classes\SystemFileAssociations\.pdf\shell\ImagePdfTools\shell\03_SplitEveryN]
-@="Split Every N Pages..."
-[HKEY_CURRENT_USER\Software\Classes\SystemFileAssociations\.pdf\shell\ImagePdfTools\shell\03_SplitEveryN\command]
-@="__PYW__ \"C:\\Scripts\\imagepdf\\main.pyw\" split-n \"%1\""
-
-[HKEY_CURRENT_USER\Software\Classes\SystemFileAssociations\.pdf\shell\ImagePdfTools\shell\04_Compress100KB]
-@="Compress to 100 KB"
-[HKEY_CURRENT_USER\Software\Classes\SystemFileAssociations\.pdf\shell\ImagePdfTools\shell\04_Compress100KB\command]
-@="__PYW__ \"C:\\Scripts\\imagepdf\\main.pyw\" compress-100 \"%1\""
-
-[HKEY_CURRENT_USER\Software\Classes\SystemFileAssociations\.pdf\shell\ImagePdfTools\shell\05_Compress500KB]
-@="Compress to 500 KB"
-[HKEY_CURRENT_USER\Software\Classes\SystemFileAssociations\.pdf\shell\ImagePdfTools\shell\05_Compress500KB\command]
-@="__PYW__ \"C:\\Scripts\\imagepdf\\main.pyw\" compress-500 \"%1\""
-
-[HKEY_CURRENT_USER\Software\Classes\SystemFileAssociations\.pdf\shell\ImagePdfTools\shell\06_Compress1MB]
-@="Compress to 1 MB"
-[HKEY_CURRENT_USER\Software\Classes\SystemFileAssociations\.pdf\shell\ImagePdfTools\shell\06_Compress1MB\command]
-@="__PYW__ \"C:\\Scripts\\imagepdf\\main.pyw\" compress-1024 \"%1\""
-
-[HKEY_CURRENT_USER\Software\Classes\SystemFileAssociations\.pdf\shell\ImagePdfTools\shell\07_Compress2MB]
-@="Compress to 2 MB"
-[HKEY_CURRENT_USER\Software\Classes\SystemFileAssociations\.pdf\shell\ImagePdfTools\shell\07_Compress2MB\command]
-@="__PYW__ \"C:\\Scripts\\imagepdf\\main.pyw\" compress-2048 \"%1\""
-
-[HKEY_CURRENT_USER\Software\Classes\SystemFileAssociations\.pdf\shell\ImagePdfTools\shell\08_CompressCustom]
-@="Compress to Custom..."
-[HKEY_CURRENT_USER\Software\Classes\SystemFileAssociations\.pdf\shell\ImagePdfTools\shell\08_CompressCustom\command]
-@="__PYW__ \"C:\\Scripts\\imagepdf\\main.pyw\" compress-custom \"%1\""
-
-[HKEY_CURRENT_USER\Software\Classes\SystemFileAssociations\.pdf\shell\ImagePdfTools\shell\09_QueueForMerge]
+[HKEY_CURRENT_USER\Software\Classes\SystemFileAssociations\.pdf\shell\ImagePdfTools\shell\02_QueueForMerge]
 @="Queue for Merge"
-[HKEY_CURRENT_USER\Software\Classes\SystemFileAssociations\.pdf\shell\ImagePdfTools\shell\09_QueueForMerge\command]
+[HKEY_CURRENT_USER\Software\Classes\SystemFileAssociations\.pdf\shell\ImagePdfTools\shell\02_QueueForMerge\command]
 @="__PYW__ \"C:\\Scripts\\imagepdf\\main.pyw\" queue \"%1\""
 
-[HKEY_CURRENT_USER\Software\Classes\SystemFileAssociations\.pdf\shell\ImagePdfTools\shell\10_MergeQueue]
+[HKEY_CURRENT_USER\Software\Classes\SystemFileAssociations\.pdf\shell\ImagePdfTools\shell\03_MergeQueue]
 @="Merge Queued PDFs"
-[HKEY_CURRENT_USER\Software\Classes\SystemFileAssociations\.pdf\shell\ImagePdfTools\shell\10_MergeQueue\command]
+[HKEY_CURRENT_USER\Software\Classes\SystemFileAssociations\.pdf\shell\ImagePdfTools\shell\03_MergeQueue\command]
 @="__PYW__ \"C:\\Scripts\\imagepdf\\main.pyw\" merge-queue \"%1\""
 
+; -- conversion group (separator above) --
+[HKEY_CURRENT_USER\Software\Classes\SystemFileAssociations\.pdf\shell\ImagePdfTools\shell\04_ConvertToImages]
+@="Convert to Images (PNG)"
+"CommandFlags"=dword:00000020
+[HKEY_CURRENT_USER\Software\Classes\SystemFileAssociations\.pdf\shell\ImagePdfTools\shell\04_ConvertToImages\command]
+@="__PYW__ \"C:\\Scripts\\imagepdf\\main.pyw\" pdf-to-images \"%1\""
+
+[HKEY_CURRENT_USER\Software\Classes\SystemFileAssociations\.pdf\shell\ImagePdfTools\shell\05_ConvertToImagesJPG]
+@="Convert to Images (JPG)"
+[HKEY_CURRENT_USER\Software\Classes\SystemFileAssociations\.pdf\shell\ImagePdfTools\shell\05_ConvertToImagesJPG\command]
+@="__PYW__ \"C:\\Scripts\\imagepdf\\main.pyw\" pdf-to-images-jpg \"%1\""
+
+; -- split group (separator above) --
+[HKEY_CURRENT_USER\Software\Classes\SystemFileAssociations\.pdf\shell\ImagePdfTools\shell\06_SplitEveryPage]
+@="Split Every Page"
+"CommandFlags"=dword:00000020
+[HKEY_CURRENT_USER\Software\Classes\SystemFileAssociations\.pdf\shell\ImagePdfTools\shell\06_SplitEveryPage\command]
+@="__PYW__ \"C:\\Scripts\\imagepdf\\main.pyw\" split-page \"%1\""
+
+[HKEY_CURRENT_USER\Software\Classes\SystemFileAssociations\.pdf\shell\ImagePdfTools\shell\07_SplitEveryN]
+@="Split Every N Pages..."
+[HKEY_CURRENT_USER\Software\Classes\SystemFileAssociations\.pdf\shell\ImagePdfTools\shell\07_SplitEveryN\command]
+@="__PYW__ \"C:\\Scripts\\imagepdf\\main.pyw\" split-n \"%1\""
+
+; -- compress group (separator above) --
+[HKEY_CURRENT_USER\Software\Classes\SystemFileAssociations\.pdf\shell\ImagePdfTools\shell\08_Compress100KB]
+@="Compress to 100 KB"
+"CommandFlags"=dword:00000020
+[HKEY_CURRENT_USER\Software\Classes\SystemFileAssociations\.pdf\shell\ImagePdfTools\shell\08_Compress100KB\command]
+@="__PYW__ \"C:\\Scripts\\imagepdf\\main.pyw\" compress-100 \"%1\""
+
+[HKEY_CURRENT_USER\Software\Classes\SystemFileAssociations\.pdf\shell\ImagePdfTools\shell\09_Compress500KB]
+@="Compress to 500 KB"
+[HKEY_CURRENT_USER\Software\Classes\SystemFileAssociations\.pdf\shell\ImagePdfTools\shell\09_Compress500KB\command]
+@="__PYW__ \"C:\\Scripts\\imagepdf\\main.pyw\" compress-500 \"%1\""
+
+[HKEY_CURRENT_USER\Software\Classes\SystemFileAssociations\.pdf\shell\ImagePdfTools\shell\10_Compress1MB]
+@="Compress to 1 MB"
+[HKEY_CURRENT_USER\Software\Classes\SystemFileAssociations\.pdf\shell\ImagePdfTools\shell\10_Compress1MB\command]
+@="__PYW__ \"C:\\Scripts\\imagepdf\\main.pyw\" compress-1024 \"%1\""
+
+[HKEY_CURRENT_USER\Software\Classes\SystemFileAssociations\.pdf\shell\ImagePdfTools\shell\11_Compress2MB]
+@="Compress to 2 MB"
+[HKEY_CURRENT_USER\Software\Classes\SystemFileAssociations\.pdf\shell\ImagePdfTools\shell\11_Compress2MB\command]
+@="__PYW__ \"C:\\Scripts\\imagepdf\\main.pyw\" compress-2048 \"%1\""
+
+[HKEY_CURRENT_USER\Software\Classes\SystemFileAssociations\.pdf\shell\ImagePdfTools\shell\12_CompressCustom]
+@="Compress to Custom..."
+[HKEY_CURRENT_USER\Software\Classes\SystemFileAssociations\.pdf\shell\ImagePdfTools\shell\12_CompressCustom\command]
+@="__PYW__ \"C:\\Scripts\\imagepdf\\main.pyw\" compress-custom \"%1\""
+
+; -- contact (separator above) --
 [HKEY_CURRENT_USER\Software\Classes\SystemFileAssociations\.pdf\shell\ImagePdfTools\shell\99_ContactDeveloper]
 @="Contact Developer"
+"CommandFlags"=dword:00000020
 [HKEY_CURRENT_USER\Software\Classes\SystemFileAssociations\.pdf\shell\ImagePdfTools\shell\99_ContactDeveloper\command]
 @="rundll32 url.dll,FileProtocolHandler https://manoj-sharma-portfolio.vercel.app/links"

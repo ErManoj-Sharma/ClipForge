@@ -342,6 +342,65 @@ def test_menu_has_exactly_one_png_verb():
     assert reg.count('@="Convert to Images (JPG)"') == 1
 
 
+def _reg_sections(name="tools_menu.reg"):
+    reg = open(_here(name), encoding="utf-8").read()
+    sections, cur = {}, None
+    for line in reg.splitlines():
+        line = line.strip()
+        if line.startswith("[") and line.endswith("]"):
+            cur = line[1:-1]
+            sections[cur] = []
+        elif cur is not None and line and not line.startswith(";"):
+            sections[cur].append(line)
+    return sections
+
+
+PDF = ("HKEY_CURRENT_USER\\Software\\Classes\\SystemFileAssociations"
+       "\\.pdf\\shell\\ImagePdfTools\\shell\\")
+IMG = ("HKEY_CURRENT_USER\\Software\\Classes\\SystemFileAssociations"
+       "\\image\\shell\\ImagePdfTools\\shell\\")
+SEP = '"CommandFlags"=dword:00000020'
+
+
+def test_menu_groups_have_separators():
+    s = _reg_sections()
+    # only the first item of each group after the first carries the separator
+    expected = {PDF + "04_ConvertToImages", PDF + "06_SplitEveryPage",
+                PDF + "08_Compress100KB", PDF + "99_ContactDeveloper",
+                IMG + "04_Resize50KB", IMG + "99_ContactDeveloper"}
+    got = {k for k, v in s.items()
+           if SEP in v and not k.endswith("\\command")}
+    assert got == expected
+
+
+def test_menu_order_is_grouped():
+    s = _reg_sections()
+    pdf = sorted(k[len(PDF):] for k in s
+                 if k.startswith(PDF) and not k.endswith("\\command"))
+    assert pdf == ["01_MergeSelected", "02_QueueForMerge", "03_MergeQueue",
+                   "04_ConvertToImages", "05_ConvertToImagesJPG",
+                   "06_SplitEveryPage", "07_SplitEveryN",
+                   "08_Compress100KB", "09_Compress500KB", "10_Compress1MB",
+                   "11_Compress2MB", "12_CompressCustom",
+                   "99_ContactDeveloper"]
+    img = sorted(k[len(IMG):] for k in s
+                 if k.startswith(IMG) and not k.endswith("\\command"))
+    assert img == ["01_ConvertToPDF", "02_ConvertToPNG", "03_ConvertToJPG",
+                   "04_Resize50KB", "05_Resize100KB", "06_Resize150KB",
+                   "07_Resize300KB", "08_ResizeCustomKB", "09_ResizePixels",
+                   "99_ContactDeveloper"]
+
+
+def test_menu_verbs_map_to_actions():
+    import re
+    reg = open(_here("tools_menu.reg"), encoding="utf-8").read()
+    actions = set(re.findall(r'main\.pyw\\"\s+([a-z0-9-]+)', reg))
+    code = open(_here("main.py"), encoding="utf-8").read()
+    known = (set(re.findall(r'"(resize-kb-\d+|compress-\d+)"', code)) |
+             set(re.findall(r'action == "([a-z-]+)"', code)))
+    assert actions and actions <= known
+
+
 def test_setup_wipes_stale_submenu_verbs_before_import():
     setup = open(_here("setup.ps1"), encoding="utf-8").read()
     stale = "SystemFileAssociations\\.pdf\\shell\\ImagePdfTools"
